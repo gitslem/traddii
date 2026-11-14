@@ -1,3 +1,5 @@
+import { ALL_PAIRS, pairToSymbol } from '../config/pairs'
+
 export interface CryptoRecommendation {
   symbol: string
   pair: string
@@ -23,42 +25,42 @@ export interface MarketData {
   marketCap?: number
 }
 
-// Narratives and trending sectors (can be updated based on current market conditions)
-const MARKET_NARRATIVES = [
-  { keyword: ['AI', 'AGIX', 'FET', 'RNDR'], narrative: 'AI & Machine Learning' },
-  { keyword: ['L2', 'ARB', 'OP', 'POL'], narrative: 'Layer 2 Scaling' },
-  { keyword: ['GAMING', 'IMX', 'GALA', 'SAND'], narrative: 'GameFi' },
-  { keyword: ['RWA', 'ONDO', 'LINK'], narrative: 'Real World Assets' },
-  { keyword: ['DEPIN', 'FIL', 'AR', 'HNT'], narrative: 'DePIN' },
-  { keyword: ['SOL', 'AVAX', 'NEAR'], narrative: 'Alt Layer 1s' },
-  { keyword: ['BTC', 'ETH'], narrative: 'Blue Chip' },
-  { keyword: ['MEME', 'DOGE', 'SHIB', 'PEPE'], narrative: 'Meme Coins' }
+// Sector of each coin Traddii lists (matched on the exact coin, not a substring)
+const MARKET_NARRATIVES: { coins: string[]; narrative: string }[] = [
+  { coins: ['BTC', 'ETH', 'BNB'], narrative: 'Blue Chip' },
+  { coins: ['RENDER', 'TAO', 'WLD'], narrative: 'AI & Machine Learning' },
+  { coins: ['ARB', 'OP', 'POL'], narrative: 'Layer 2 Scaling' },
+  { coins: ['ONDO', 'LINK'], narrative: 'Real World Assets' },
+  { coins: ['FIL'], narrative: 'DePIN' },
+  { coins: ['UNI', 'AAVE', 'ENA', 'HYPE'], narrative: 'DeFi' },
+  { coins: ['XRP', 'XLM', 'LTC', 'BCH'], narrative: 'Payments' },
+  { coins: ['DOGE', 'WIF'], narrative: 'Meme Coins' },
+  {
+    coins: ['SOL', 'AVAX', 'NEAR', 'SUI', 'APT', 'SEI', 'INJ', 'TIA', 'ADA', 'DOT', 'ATOM', 'HBAR', 'TRX', 'ETC'],
+    narrative: 'Alt Layer 1s'
+  }
 ]
 
-// Popular trading pairs to analyze
-const TRADING_PAIRS = [
-  'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
-  'ADAUSDT', 'DOGEUSDT', 'POLUSDT', 'DOTUSDT', 'AVAXUSDT',
-  'LTCUSDT', 'LINKUSDT', 'UNIUSDT', 'ATOMUSDT', 'FILUSDT',
-  'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT', 'SUIUSDT',
-  'SEIUSDT', 'INJUSDT', 'TIAUSDT', 'WLDUSDT', 'RENDERUSDT',
-  'FETUSDT', 'GALAUSDT', 'SANDUSDT', 'IMXUSDT', 'ONDOUSDT',
-  'HNTUSDT', 'ARUSDT', 'AGIXUSDT', 'PEPEUSDT', 'SHIBUSDT'
-]
+// Every pair Traddii lists, so each suggestion can be analysed and practised
+const TRADING_PAIRS = ALL_PAIRS.map(pairToSymbol)
 
-interface BinanceTicker24h {
+// Bybit USDT perpetual ticker (all values are strings)
+interface BybitTicker {
   symbol: string
   lastPrice: string
-  quoteVolume: string
-  priceChangePercent: string
-  highPrice: string
-  lowPrice: string
+  bid1Price: string
+  ask1Price: string
+  price24hPcnt: string
+  highPrice24h: string
+  lowPrice24h: string
+  turnover24h: string
 }
 
 class CryptoRecommendationService {
   private cache: Map<string, { data: MarketData[], timestamp: number }> = new Map()
   private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-  private readonly BINANCE_API = 'https://api.binance.com/api/v3'
+  // Bybit works for US visitors too; Binance answers them with HTTP 451
+  private readonly BYBIT_TICKERS = 'https://api.bybit.com/v5/market/tickers?category=linear'
 
   async fetchMarketData(symbols: string[] = TRADING_PAIRS): Promise<MarketData[]> {
     const cacheKey = 'market_data'
@@ -69,48 +71,26 @@ class CryptoRecommendationService {
     }
 
     try {
-      // Fetch 24hr ticker data from Binance
-      const tickerResponse = await fetch(`${this.BINANCE_API}/ticker/24hr`)
-      if (!tickerResponse.ok) throw new Error('Failed to fetch ticker data')
+      // One request returns every ticker with its 24h stats and best bid/ask
+      const response = await fetch(this.BYBIT_TICKERS)
+      if (!response.ok) throw new Error(`Failed to fetch ticker data (HTTP ${response.status})`)
+      const body: { retCode: number; retMsg: string; result?: { list?: BybitTicker[] } } = await response.json()
+      if (body.retCode !== 0) throw new Error(body.retMsg || 'Bybit ticker error')
 
-      const tickerData: BinanceTicker24h[] = await tickerResponse.json()
-
-      // Fetch order book depth to calculate spreads
-      const marketData: MarketData[] = []
-
-      for (const symbol of symbols) {
-        const ticker = tickerData.find((t) => t.symbol === symbol)
-        if (!ticker) continue
-
-        try {
-          // Get order book for spread calculation
-          const bookResponse = await fetch(
-            `${this.BINANCE_API}/ticker/bookTicker?symbol=${symbol}`
-          )
-          const bookData = await bookResponse.json()
-
-          const price = parseFloat(ticker.lastPrice)
-          const volume24h = parseFloat(ticker.quoteVolume)
-          const priceChange24h = parseFloat(ticker.priceChangePercent)
-          const high24h = parseFloat(ticker.highPrice)
-          const low24h = parseFloat(ticker.lowPrice)
-          const bid = parseFloat(bookData.bidPrice)
-          const ask = parseFloat(bookData.askPrice)
-
-          marketData.push({
-            symbol,
-            price,
-            volume24h,
-            priceChange24h,
-            high24h,
-            low24h,
-            bid,
-            ask
-          })
-        } catch (error) {
-          console.warn(`Failed to fetch data for ${symbol}:`, error)
-        }
-      }
+      const wanted = new Set(symbols)
+      const marketData: MarketData[] = (body.result?.list ?? [])
+        .filter(t => wanted.has(t.symbol))
+        .map(t => ({
+          symbol: t.symbol,
+          price: parseFloat(t.lastPrice),
+          volume24h: parseFloat(t.turnover24h),
+          priceChange24h: parseFloat(t.price24hPcnt) * 100,
+          high24h: parseFloat(t.highPrice24h),
+          low24h: parseFloat(t.lowPrice24h),
+          bid: parseFloat(t.bid1Price),
+          ask: parseFloat(t.ask1Price)
+        }))
+        .filter(d => [d.price, d.volume24h, d.high24h, d.low24h, d.bid, d.ask].every(Number.isFinite) && d.price > 0)
 
       this.cache.set(cacheKey, { data: marketData, timestamp: Date.now() })
       return marketData
@@ -132,13 +112,8 @@ class CryptoRecommendationService {
   }
 
   detectNarrative(symbol: string): string {
-    const upperSymbol = symbol.toUpperCase()
-    for (const narrative of MARKET_NARRATIVES) {
-      if (narrative.keyword.some(keyword => upperSymbol.includes(keyword))) {
-        return narrative.narrative
-      }
-    }
-    return 'General Market'
+    const coin = symbol.toUpperCase().replace(/USDT$/, '')
+    return MARKET_NARRATIVES.find(n => n.coins.includes(coin))?.narrative ?? 'General Market'
   }
 
   checkStructure(data: MarketData): boolean {
