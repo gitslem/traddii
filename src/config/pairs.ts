@@ -1,10 +1,10 @@
 /**
  * Trading pairs offered across Traddii (Calculator, Market, Price, Practice).
  *
- * To add a pair, add its base coin to ALL_BASES. It must trade as <BASE>USDT
- * on both Binance spot (charts, structure, candles) and Bybit USDT perpetuals
- * (Practice, AI brief). Coins Bybit only lists in 1000-unit contracts
- * (e.g. 1000PEPEUSDT) are not supported yet.
+ * To add a pair, add its base coin to POPULAR_BASES or OTHER_BASES. It must
+ * trade as <BASE>USDT on Bybit USDT perpetuals, which supply the candles
+ * (Market, Price), Practice and the AI brief. Coins Bybit only lists in
+ * 1000-unit contracts (e.g. 1000PEPEUSDT) are not supported yet.
  */
 
 // Shown first, in this order
@@ -33,10 +33,3 @@ export const symbolToPair = (symbol: string) => symbol.toUpperCase().replace(/US
 export const isSupportedPair = (pair: string) => ALL_PAIRS.includes(pair)
 export const isSupportedSymbol = (symbol: string) => isSupportedPair(symbolToPair(symbol))
 
-/** Price with enough decimals for cheap coins: 68,912.50 / 2.4512 / 0.086180 */
-export const formatPrice = (price: number): string => {
-  if (!Number.isFinite(price)) return '0.00'
-  const abs = Math.abs(price)
-  const digits = abs >= 1000 ? 2 : abs >= 1 ? 4 : abs >= 0.01 ? 6 : 8
-  return price.toLocaleString(undefined, { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits })
-}

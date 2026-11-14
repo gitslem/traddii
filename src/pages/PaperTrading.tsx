@@ -19,7 +19,8 @@ import {
   LineChart, Info, ExternalLink, RotateCcw, AlertTriangle
 } from 'lucide-react'
 import PairSelect from '../components/PairSelect'
-import { isSupportedSymbol, formatPrice } from '../config/pairs'
+import { isSupportedSymbol } from '../config/pairs'
+import { formatPrice } from '../utils/format'
 
 // Order pre-filled from the Position Calculator (?pair=&side=&qty=&sl=&tp=&lev=)
 interface OrderPrefill {

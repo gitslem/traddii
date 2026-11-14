@@ -9,10 +9,8 @@ export interface CandleData {
   close: number
   volume: number
   closeTime: number
+  /** Value traded in USDT */
   quoteVolume: number
-  trades: number
-  takerBuyBaseVolume: number
-  takerBuyQuoteVolume: number
 }
 
 export interface OHLCVData {
@@ -35,7 +33,9 @@ export interface OHLCVData {
   }
 }
 
-const BINANCE_API = 'https://api.binance.com/api/v3'
+// Candles come from Bybit USDT perpetuals: free, no key, allowed from the
+// browser, and not blocked for US visitors (Binance answers them with HTTP 451)
+const BYBIT_API = 'https://api.bybit.com/v5/market'
 
 
 // Interval options
@@ -48,33 +48,47 @@ export const INTERVALS = {
   '1d': '1 Day'
 }
 
-type RawKline = [number, string, string, string, string, string, number, string, number, string, string, ...unknown[]]
+// Bybit interval codes for the timeframes Traddii uses
+const BYBIT_INTERVALS: Record<string, { code: string; ms: number }> = {
+  '1m': { code: '1', ms: 60_000 },
+  '5m': { code: '5', ms: 300_000 },
+  '15m': { code: '15', ms: 900_000 },
+  '30m': { code: '30', ms: 1_800_000 },
+  '1h': { code: '60', ms: 3_600_000 },
+  '4h': { code: '240', ms: 14_400_000 },
+  '1d': { code: 'D', ms: 86_400_000 },
+  '1w': { code: 'W', ms: 604_800_000 }
+}
 
-const parseKline = (k: RawKline): CandleData => ({
-  openTime: k[0],
+// [startTime, open, high, low, close, volume, turnover], all strings
+type RawKline = [string, string, string, string, string, string, string]
+
+const parseKline = (k: RawKline, ms: number): CandleData => ({
+  openTime: Number(k[0]),
   open: parseFloat(k[1]),
   high: parseFloat(k[2]),
   low: parseFloat(k[3]),
   close: parseFloat(k[4]),
   volume: parseFloat(k[5]),
-  closeTime: k[6],
-  quoteVolume: parseFloat(k[7]),
-  trades: k[8],
-  takerBuyBaseVolume: parseFloat(k[9]),
-  takerBuyQuoteVolume: parseFloat(k[10])
+  closeTime: Number(k[0]) + ms - 1,
+  quoteVolume: parseFloat(k[6])
 })
 
 const fetchKlines = async (pair: string, interval: string, limit: number): Promise<CandleData[] | null> => {
-  const binanceSymbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
-  if (!binanceSymbol) {
-    console.error('Symbol not found:', pair)
+  const symbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
+  const tf = BYBIT_INTERVALS[interval]
+  if (!symbol || !tf) {
+    console.error('Unsupported pair or interval:', pair, interval)
     return null
   }
-  const response = await axios.get<RawKline[]>(`${BINANCE_API}/klines`, {
-    params: { symbol: binanceSymbol, interval, limit },
+  const response = await axios.get<{ retCode: number; retMsg: string; result?: { list?: RawKline[] } }>(`${BYBIT_API}/kline`, {
+    params: { category: 'linear', symbol, interval: tf.code, limit },
     timeout: 8000
   })
-  return Array.isArray(response.data) ? response.data.map(parseKline) : null
+  if (response.data.retCode !== 0) throw new Error(response.data.retMsg || 'Bybit kline error')
+  const list = response.data.result?.list
+  // Bybit returns newest first; callers expect oldest first with the live candle last
+  return Array.isArray(list) ? list.map(k => parseKline(k, tf.ms)).reverse() : null
 }
 
 /**

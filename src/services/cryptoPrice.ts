@@ -200,45 +200,47 @@ const fetchOKXPrice = async (symbol: string, pair: string): Promise<CryptoPrice 
   }
 }
 
-// Main function to get crypto price from any exchange
+const FETCHERS: Record<string, (symbol: string, pair: string) => Promise<CryptoPrice | null>> = {
+  binance: fetchBinancePrice,
+  bybit: fetchBybitPrice,
+  okx: fetchOKXPrice,
+  gateio: fetchGatePrice,
+  htx: fetchHTXPrice,
+  bitget: fetchBitgetPrice,
+  kraken: fetchKrakenPrice,
+  coinbase: fetchCoinbasePrice
+}
+
+// Main function to get crypto price from any exchange. If the chosen exchange
+// can't be read, Binance and then Bybit are tried (Binance blocks US visitors),
+// and the card says which source it is showing.
 export const getCryptoPrice = async (pair: string, exchange: string = 'binance'): Promise<CryptoPrice | null> => {
-  try {
-    const symbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
-    if (!symbol) {
-      console.error('Symbol not found:', pair)
-      return null
-    }
-
-    const id = exchange.toLowerCase()
-    if (NO_BROWSER_ACCESS[id]) {
-      const price = await fetchBinancePrice(symbol, pair)
-      return price && { ...price, note: `${NO_BROWSER_ACCESS[id]} doesn't share prices with websites - showing Binance` }
-    }
-
-    // Route to appropriate exchange API
-    let price: CryptoPrice | null
-    switch (id) {
-      case 'bybit': price = await fetchBybitPrice(symbol, pair); break
-      case 'okx': price = await fetchOKXPrice(symbol, pair); break
-      case 'gateio': price = await fetchGatePrice(symbol, pair); break
-      case 'htx': price = await fetchHTXPrice(symbol, pair); break
-      case 'bitget': price = await fetchBitgetPrice(symbol, pair); break
-      case 'kraken': price = await fetchKrakenPrice(symbol, pair); break
-      case 'coinbase': price = await fetchCoinbasePrice(symbol, pair); break
-      default: return await fetchBinancePrice(symbol, pair)
-    }
-    if (!price) throw new Error(`No ${pair} price from ${exchange}`)
-    return price
-  } catch (error) {
-    console.error(`Error fetching ${pair} price from ${exchange}:`, error)
-    // Fallback to Binance if the selected exchange fails, and say so
-    if (exchange.toLowerCase() !== 'binance') {
-      const price = await getCryptoPrice(pair, 'binance')
-      const name = EXCHANGE_NAMES[exchange.toLowerCase()] ?? exchange
-      return price && { ...price, note: `${name} price unavailable right now - showing Binance` }
-    }
+  const symbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
+  if (!symbol) {
+    console.error('Symbol not found:', pair)
     return null
   }
+
+  const id = exchange.toLowerCase()
+  const chosen = FETCHERS[id] ? id : NO_BROWSER_ACCESS[id] ? null : 'binance'
+  const sources = [...new Set([chosen, 'binance', 'bybit'].filter((s): s is string => !!s))]
+  const name = NO_BROWSER_ACCESS[id] ?? EXCHANGE_NAMES[id] ?? (id === 'binance' ? 'Binance' : exchange)
+
+  for (const source of sources) {
+    try {
+      const price = await FETCHERS[source](symbol, pair)
+      if (!price) throw new Error(`No ${pair} price from ${source}`)
+      if (source === chosen) return price
+      const shown = source === 'bybit' ? 'Bybit' : 'Binance'
+      const note = NO_BROWSER_ACCESS[id]
+        ? `${name} doesn't share prices with websites - showing ${shown}`
+        : `${name} price unavailable right now - showing ${shown}`
+      return { ...price, note }
+    } catch (error) {
+      console.error(`Error fetching ${pair} price from ${source}:`, error)
+    }
+  }
+  return null
 }
 
 // Get multiple prices at once

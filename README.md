@@ -24,7 +24,7 @@ Every tool page has a **Guide** button explaining how to use it. Day and night t
 
 ### Trading pairs
 
-36 USDT pairs are available on every page, with a searchable picker. They are listed in [`src/config/pairs.ts`](./src/config/pairs.ts). To add one, add its coin to that file. It must trade as `<COIN>USDT` on both Binance spot and Bybit USDT perpetuals.
+36 USDT pairs are available on every page, with a searchable picker. They are listed in [`src/config/pairs.ts`](./src/config/pairs.ts). To add one, add its coin to that file. It must trade as `<COIN>USDT` on Bybit USDT perpetuals, which supply the candles, Practice and the AI brief.
 
 ### Bring your own AI model
 
@@ -38,7 +38,7 @@ Requests go straight from the browser to the chosen provider. Keys are stored on
 
 ## Tech stack
 
-React 19, TypeScript, Vite 7, Firebase (Hosting, Authentication, Firestore, AI Logic, App Check), and GitHub Actions for CI/CD. Market data comes from the public Binance and Bybit APIs and alternative.me (Fear & Greed). None of them need an API key.
+React 19, TypeScript, Vite 7, Firebase (Hosting, Authentication, Firestore, AI Logic, App Check), and GitHub Actions for CI/CD. Candles, Practice and positioning data come from Bybit's public API; the Calculator's live prices come from each exchange's public API; Fear & Greed comes from alternative.me. None of them need an API key.
 
 ## Getting started
 

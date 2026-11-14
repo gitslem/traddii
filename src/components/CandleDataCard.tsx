@@ -84,6 +84,7 @@ const CandleDataCard = ({ pair, timeframe, onUseCandleData, autoFill = true }: C
   }
 
   const formatVolume = (volume: number) => {
+    if (volume >= 1000000000) return `${(volume / 1000000000).toFixed(2)}B`
     if (volume >= 1000000) return `${(volume / 1000000).toFixed(2)}M`
     if (volume >= 1000) return `${(volume / 1000).toFixed(2)}K`
     return volume.toFixed(2)
@@ -165,8 +166,8 @@ const CandleDataCard = ({ pair, timeframe, onUseCandleData, autoFill = true }: C
             <span className="value">{formatVolume(candleData.current.volume)}</span>
           </div>
           <div className="ohlcv-item">
-            <span className="label">Trades</span>
-            <span className="value">{candleData.current.trades.toLocaleString()}</span>
+            <span className="label">Turnover</span>
+            <span className="value">${formatVolume(candleData.current.quoteVolume)}</span>
           </div>
         </div>
       </div>
