@@ -1448,3 +1448,21 @@
   outline: 2px solid var(--gold-ink);
   outline-offset: 3px;
 }
+
+/* Searchable pair picker */
+.calculator-page {
+  --pair-accent: #d4af37;
+}
+
+.calculator-page .input-group .pair-select-trigger {
+  padding: 1rem;
+  background: rgb(var(--ink) / 0.05);
+  border: 2px solid rgb(var(--ink) / 0.1);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.calculator-page .input-group .pair-select-trigger[aria-expanded="true"] {
+  border-color: #d4af37;
+}

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isSupportedPair, pairToSymbol } from '../config/pairs'
 
 export interface CandleData {
   openTime: number
@@ -36,19 +37,6 @@ export interface OHLCVData {
 
 const BINANCE_API = 'https://api.binance.com/api/v3'
 
-// Map display names to Binance symbols
-const symbolMap: Record<string, string> = {
-  'BTC/USDT': 'BTCUSDT',
-  'ETH/USDT': 'ETHUSDT',
-  'BNB/USDT': 'BNBUSDT',
-  'SOL/USDT': 'SOLUSDT',
-  'XRP/USDT': 'XRPUSDT',
-  'ADA/USDT': 'ADAUSDT',
-  'DOGE/USDT': 'DOGEUSDT',
-  'POL/USDT': 'POLUSDT',
-  'DOT/USDT': 'DOTUSDT',
-  'AVAX/USDT': 'AVAXUSDT'
-}
 
 // Interval options
 export const INTERVALS = {
@@ -77,7 +65,7 @@ const parseKline = (k: RawKline): CandleData => ({
 })
 
 const fetchKlines = async (pair: string, interval: string, limit: number): Promise<CandleData[] | null> => {
-  const binanceSymbol = symbolMap[pair]
+  const binanceSymbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
   if (!binanceSymbol) {
     console.error('Symbol not found:', pair)
     return null

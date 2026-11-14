@@ -22,6 +22,10 @@
 
 Every tool page has a **Guide** button explaining how to use it. Day and night themes are included.
 
+### Trading pairs
+
+36 USDT pairs are available on every page, with a searchable picker. They are listed in [`src/config/pairs.ts`](./src/config/pairs.ts). To add one, add its coin to that file. It must trade as `<COIN>USDT` on both Binance spot and Bybit USDT perpetuals.
+
 ### Bring your own AI model
 
 The AI Market Brief uses Traddii's free Gemini (Firebase AI Logic) by default. Users can switch to their own model from the gear icon:

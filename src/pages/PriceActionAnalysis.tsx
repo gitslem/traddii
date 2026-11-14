@@ -13,6 +13,7 @@ import {
   AlertTriangle, CheckCircle2, Clock, ChevronDown, ChevronUp,
   Volume2, Gauge, Layers, Eye, Check, Info
 } from 'lucide-react'
+import PairSelect from '../components/PairSelect'
 
 interface CandleData {
   open: string
@@ -217,18 +218,7 @@ const PriceActionAnalysis = () => {
         <div className="pa-top-bar glass-card">
           <div className="pair-selector">
             <label>Trading Pair</label>
-            <select value={cryptoPair} onChange={(e) => { setCryptoPair(e.target.value); setLiveSync(true) }}>
-              <option>BTC/USDT</option>
-              <option>ETH/USDT</option>
-              <option>BNB/USDT</option>
-              <option>SOL/USDT</option>
-              <option>XRP/USDT</option>
-              <option>ADA/USDT</option>
-              <option>DOGE/USDT</option>
-              <option>POL/USDT</option>
-              <option>DOT/USDT</option>
-              <option>AVAX/USDT</option>
-            </select>
+            <PairSelect value={cryptoPair} onChange={(pair) => { setCryptoPair(pair); setLiveSync(true) }} />
           </div>
 
           <div className="timeframe-selector">

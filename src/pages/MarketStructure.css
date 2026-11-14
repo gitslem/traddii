@@ -1072,3 +1072,19 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+
+/* Searchable pair picker */
+.market-structure-page {
+  --pair-accent: #10b981;
+}
+
+.market-structure-page .pair-selector .pair-select {
+  flex: 1;
+}
+
+.market-structure-page .pair-selector .pair-select-trigger {
+  padding: 0.75rem 1rem;
+  background: rgb(var(--ink) / 0.05);
+  border: 1px solid rgb(var(--ink) / 0.1);
+  border-radius: 12px;
+}

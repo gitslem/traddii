@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { isSupportedPair, pairToSymbol } from '../config/pairs'
 
 export interface CryptoPrice {
   symbol: string
@@ -14,19 +15,6 @@ export interface CryptoPrice {
   note?: string
 }
 
-// Map display names to exchange symbols (most exchanges use same format)
-const symbolMap: Record<string, string> = {
-  'BTC/USDT': 'BTCUSDT',
-  'ETH/USDT': 'ETHUSDT',
-  'BNB/USDT': 'BNBUSDT',
-  'SOL/USDT': 'SOLUSDT',
-  'XRP/USDT': 'XRPUSDT',
-  'ADA/USDT': 'ADAUSDT',
-  'DOGE/USDT': 'DOGEUSDT',
-  'POL/USDT': 'POLUSDT',
-  'DOT/USDT': 'DOTUSDT',
-  'AVAX/USDT': 'AVAXUSDT'
-}
 
 // Exchange API endpoints
 const EXCHANGE_APIS: Record<string, string> = {
@@ -215,7 +203,7 @@ const fetchOKXPrice = async (symbol: string, pair: string): Promise<CryptoPrice 
 // Main function to get crypto price from any exchange
 export const getCryptoPrice = async (pair: string, exchange: string = 'binance'): Promise<CryptoPrice | null> => {
   try {
-    const symbol = symbolMap[pair]
+    const symbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
     if (!symbol) {
       console.error('Symbol not found:', pair)
       return null

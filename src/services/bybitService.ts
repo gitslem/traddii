@@ -239,7 +239,8 @@ class BybitService {
     } catch (error) {
       if (error instanceof Error) {
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          throw new Error(`Network error: Unable to connect to Bybit ${env === 'demo' ? 'Demo Trading' : 'testnet'}. Please check your internet connection.`)
+          const target = !isPrivate ? 'Bybit' : env === 'demo' ? 'Bybit Demo Trading' : 'Bybit testnet'
+          throw new Error(`Network error: Unable to connect to ${target}. Please check your internet connection.`)
         }
         throw error
       }

@@ -1043,3 +1043,16 @@
   outline: 2px solid var(--gold-ink);
   outline-offset: 2px;
 }
+
+/* Searchable pair picker */
+.price-action-page {
+  --pair-accent: #8b5cf6;
+}
+
+.price-action-page .pair-selector .pair-select-trigger {
+  min-width: 140px;
+  padding: 0.75rem 1rem;
+  background: rgb(var(--ink) / 0.05);
+  border: 1px solid rgb(var(--ink) / 0.1);
+  border-radius: 12px;
+}

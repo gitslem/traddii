@@ -13,6 +13,8 @@ import {
   DollarSign, Percent, Target, Zap, ChevronDown, ChevronUp,
   BarChart3, Activity, Wallet, Scale, Info, CheckCircle2, XCircle, Send
 } from 'lucide-react'
+import PairSelect from '../components/PairSelect'
+import { isSupportedPair } from '../config/pairs'
 
 interface TakeProfitResult {
   name: string
@@ -94,7 +96,9 @@ const PositionCalculator = () => {
   const [takeProfitPrice, setTakeProfitPrice] = useState<string>('3800')
   const [tp2Price, setTp2Price] = useState<string>('')
   const [tp3Price, setTp3Price] = useState<string>('')
-  const [cryptoPair, setCryptoPair] = useState<string>(saved.cryptoPair ?? 'ETH/USDT')
+  const [cryptoPair, setCryptoPair] = useState<string>(
+    saved.cryptoPair && isSupportedPair(saved.cryptoPair) ? saved.cryptoPair : 'ETH/USDT'
+  )
   const [positionType, setPositionType] = useState<'long' | 'short'>('long')
   const [leverage, setLeverage] = useState<string>(saved.leverage ?? '1')
   const [useLeverage, setUseLeverage] = useState<boolean>(saved.useLeverage ?? false)
@@ -501,18 +505,7 @@ const PositionCalculator = () => {
                 <BarChart3 size={16} />
                 Trading Pair
               </label>
-              <select value={cryptoPair} onChange={(e) => setCryptoPair(e.target.value)}>
-                <option>BTC/USDT</option>
-                <option>ETH/USDT</option>
-                <option>BNB/USDT</option>
-                <option>SOL/USDT</option>
-                <option>XRP/USDT</option>
-                <option>ADA/USDT</option>
-                <option>DOGE/USDT</option>
-                <option>POL/USDT</option>
-                <option>DOT/USDT</option>
-                <option>AVAX/USDT</option>
-              </select>
+              <PairSelect value={cryptoPair} onChange={setCryptoPair} />
             </div>
 
             {/* Live Price Card */}

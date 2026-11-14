@@ -14,6 +14,7 @@ import {
   ChevronDown, ChevronUp, BarChart2, Shield, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Minus, Info, Sparkles
 } from 'lucide-react'
+import PairSelect from '../components/PairSelect'
 
 interface SupportResistance {
   level: string
@@ -296,18 +297,7 @@ const MarketStructure = () => {
             <div className="glass-card pair-section">
               <div className="pair-selector">
                 <label>Trading Pair</label>
-                <select value={cryptoPair} onChange={(e) => { setCryptoPair(e.target.value); setLiveSync(true) }}>
-                  <option>BTC/USDT</option>
-                  <option>ETH/USDT</option>
-                  <option>BNB/USDT</option>
-                  <option>SOL/USDT</option>
-                  <option>XRP/USDT</option>
-                  <option>ADA/USDT</option>
-                  <option>DOGE/USDT</option>
-                  <option>POL/USDT</option>
-                  <option>DOT/USDT</option>
-                  <option>AVAX/USDT</option>
-                </select>
+                <PairSelect value={cryptoPair} onChange={(pair) => { setCryptoPair(pair); setLiveSync(true) }} />
               </div>
             </div>
 

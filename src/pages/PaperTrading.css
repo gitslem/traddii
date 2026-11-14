@@ -2190,3 +2190,17 @@
   font-weight: 700;
   color: var(--heading);
 }
+
+/* Searchable pair picker */
+.paper-trading-page {
+  --pair-accent: #8b5cf6;
+}
+
+.paper-trading-page .symbol-dropdown .pair-select-trigger {
+  min-width: 150px;
+  padding: 0.625rem 1rem;
+  background: var(--inset-bg);
+  border: 1px solid rgb(var(--ink) / 0.1);
+  border-radius: 10px;
+  font-size: 1rem;
+}

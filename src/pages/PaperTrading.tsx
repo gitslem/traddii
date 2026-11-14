@@ -18,6 +18,8 @@ import {
   ArrowUpRight, ArrowDownRight, Layers, Activity, Lock, Unlock,
   LineChart, Info, ExternalLink, RotateCcw, AlertTriangle
 } from 'lucide-react'
+import PairSelect from '../components/PairSelect'
+import { isSupportedSymbol, formatPrice } from '../config/pairs'
 
 // Order pre-filled from the Position Calculator (?pair=&side=&qty=&sl=&tp=&lev=)
 interface OrderPrefill {
@@ -38,7 +40,7 @@ const readPrefill = (params: URLSearchParams): OrderPrefill | null => {
   const side = params.get('side')
   const lev = num('lev')
   return {
-    pair: pair && POPULAR_PAIRS.includes(pair) ? pair : undefined,
+    pair: pair && isSupportedSymbol(pair) ? pair : undefined,
     side: side === 'Buy' || side === 'Sell' ? side : undefined,
     qty: num('qty'),
     sl: num('sl'),
@@ -47,10 +49,6 @@ const readPrefill = (params: URLSearchParams): OrderPrefill | null => {
   }
 }
 
-const POPULAR_PAIRS = [
-  'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
-  'ADAUSDT', 'DOGEUSDT', 'POLUSDT', 'DOTUSDT', 'AVAXUSDT'
-]
 
 // TradingView timeframe format
 const TIMEFRAMES = [
@@ -841,20 +839,13 @@ const PaperTrading = () => {
           {/* Symbol Selector */}
           <div className="symbol-selector glass-card">
             <div className="symbol-dropdown">
-              <select
-                value={selectedPair}
-                onChange={(e) => setSelectedPair(e.target.value)}
-              >
-                {POPULAR_PAIRS.map(pair => (
-                  <option key={pair} value={pair}>{pair}</option>
-                ))}
-              </select>
+              <PairSelect value={selectedPair} onChange={setSelectedPair} format="symbol" />
             </div>
 
             {ticker && (
               <div className="ticker-display">
                 <div className="ticker-price-wrapper">
-                  <span className="ticker-price">${parseFloat(ticker.lastPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="ticker-price">${formatPrice(parseFloat(ticker.lastPrice))}</span>
                   <span className="ticker-source">Live</span>
                 </div>
                 <span className={`ticker-change ${parseFloat(ticker.price24hPcnt) >= 0 ? 'positive' : 'negative'}`}>
@@ -1076,7 +1067,7 @@ const PaperTrading = () => {
                         type="number"
                         value={orderPrice}
                         onChange={(e) => setOrderPrice(e.target.value)}
-                        placeholder={ticker ? parseFloat(ticker.lastPrice).toFixed(2) : '0.00'}
+                        placeholder={ticker ? ticker.lastPrice : '0.00'}
                         step="0.01"
                       />
                     </div>
@@ -1251,11 +1242,11 @@ const PaperTrading = () => {
                             <div className="position-details-grid">
                               <div className="detail">
                                 <span className="label">Entry Price</span>
-                                <span className="value">${trade.entryPrice.toFixed(2)}</span>
+                                <span className="value">${formatPrice(trade.entryPrice)}</span>
                               </div>
                               <div className="detail">
                                 <span className="label">Mark Price</span>
-                                <span className="value">${currentPrice.toFixed(2)}</span>
+                                <span className="value">${formatPrice(currentPrice)}</span>
                               </div>
                               <div className="detail">
                                 <span className="label">Size</span>
@@ -1279,7 +1270,7 @@ const PaperTrading = () => {
                               </div>
                               <div className="detail">
                                 <span className="label">Liq. Price</span>
-                                <span className="value warning">${liqPrice.toFixed(2)}</span>
+                                <span className="value warning">${formatPrice(liqPrice)}</span>
                               </div>
                               <div className="detail">
                                 <span className="label">Entry Fee</span>
@@ -1288,13 +1279,13 @@ const PaperTrading = () => {
                               {trade.takeProfit && (
                                 <div className="detail">
                                   <span className="label">Take Profit</span>
-                                  <span className="value positive">${trade.takeProfit.toFixed(2)}</span>
+                                  <span className="value positive">${formatPrice(trade.takeProfit)}</span>
                                 </div>
                               )}
                               {trade.stopLoss && (
                                 <div className="detail">
                                   <span className="label">Stop Loss</span>
-                                  <span className="value negative">${trade.stopLoss.toFixed(2)}</span>
+                                  <span className="value negative">${formatPrice(trade.stopLoss)}</span>
                                 </div>
                               )}
                             </div>
@@ -1325,7 +1316,7 @@ const PaperTrading = () => {
                         <div className="position-details">
                           <div className="detail">
                             <span className="label">Entry</span>
-                            <span className="value">${parseFloat(pos.entryPrice).toFixed(2)}</span>
+                            <span className="value">${formatPrice(parseFloat(pos.entryPrice))}</span>
                           </div>
                           <div className="detail">
                             <span className="label">Size</span>
@@ -1399,7 +1390,7 @@ const PaperTrading = () => {
                           <span className="type">{order.orderType}</span>
                         </div>
                         <div className="order-details">
-                          <span>Price: ${parseFloat(order.price).toFixed(2)}</span>
+                          <span>Price: ${formatPrice(parseFloat(order.price))}</span>
                           <span>Qty: {order.qty}</span>
                           <span className="status">{order.orderStatus}</span>
                         </div>
@@ -1442,8 +1433,8 @@ const PaperTrading = () => {
                             </span>
                           </div>
                           <div className="history-details">
-                            <span>Entry: ${trade.entryPrice.toFixed(2)}</span>
-                            <span>Exit: ${(trade.exitPrice || 0).toFixed(2)}</span>
+                            <span>Entry: ${formatPrice(trade.entryPrice)}</span>
+                            <span>Exit: ${formatPrice((trade.exitPrice || 0))}</span>
                             <span>Size: {trade.quantity}</span>
                             <span>Fees: -${trade.fees.toFixed(4)}</span>
                           </div>
@@ -1467,7 +1458,7 @@ const PaperTrading = () => {
                           <span className="status">{order.orderStatus}</span>
                         </div>
                         <div className="history-details">
-                          <span>Price: ${parseFloat(order.price).toFixed(2)}</span>
+                          <span>Price: ${formatPrice(parseFloat(order.price))}</span>
                           <span>Qty: {order.qty}</span>
                         </div>
                       </div>
