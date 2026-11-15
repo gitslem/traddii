@@ -18,7 +18,7 @@
 | **AI Market Brief** | On the Market page. Shows positioning data (funding rate, open-interest change, long/short account ratio, Fear & Greed), then writes a short bull/bear brief using only that data. Runs on Traddii's free Gemini, or on the user's own model. |
 | **Price Action** | Reads the last closed candle: engulfing, harami, inside bar, doji types, hammer and shooting star (depending on the prior trend), marubozu and spinning top. Compares its volume with the 20-candle average, adds nearby levels and higher-timeframe context, and includes a pre-trade checklist. |
 | **Practice** | Paper trading with $10,000 of virtual money, using live Bybit prices and real Bybit fees. Supports market and limit orders, take-profit and stop-loss, leverage, and liquidation. Bybit **Demo Trading** accounts (real prices, demo funds) or testnet accounts can be connected too. |
-| **Journal** | Log trades and notes, synced to your account with Google sign-in. Shows win rate, profit factor and streaks, and exports to CSV, JSON, text or PDF. |
+| **Journal** | Log trades and notes, synced to your account with Google sign-in. Results are net of fees, with R-multiples, an equity curve and a daily calendar. Trades can come from the Calculator or be imported from Practice. Tag setups, mindset and mistakes, and the "Your edge" report shows what is working. Personal rules flag trades that break them, an optional AI review coaches the last 7 or 30 days, and everything exports to CSV, JSON, text or a printable PDF. |
 
 Every tool page has a **Guide** button explaining how to use it. Day and night themes are included.
 

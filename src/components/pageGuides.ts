@@ -127,25 +127,35 @@ export const PAGE_GUIDES: Record<GuideKey, PageGuideContent> = {
 
   journal: {
     title: 'Trading Journal',
-    intro: 'Log your trades and notes, then see what is working. Your journal is saved to your account so you can open it on any device.',
+    intro: 'Log your trades, review them, and see what is working for you. Your journal is saved to your account so you can open it on any device.',
     sections: [
       {
-        heading: 'How to use it',
+        heading: 'Getting trades in',
         items: [
-          'Trades: press "Manage Trades" to add a trade with its pair, direction, entry, quantity, leverage, stop loss and take profit. Leave the exit price empty while the trade is open.',
-          'Notes: press "Manage Notes" to write strategies, plans, ideas or reflections, link them to trades, and pin the important ones.',
-          'Use the grid/list buttons on each section to switch between recent items and the full manager.'
+          'Log Trade: add a trade with its pair (any pair can be typed), entry, size, leverage, stop, take profit and times. Leave the exit empty while it is open.',
+          'Calculator: "Log to Journal" saves a planned setup as an open trade. Close it here when it is done.',
+          'Practice: "Import from Practice" brings in closed paper trades, and Bybit Demo Trading or testnet trades when your keys are connected. They are marked Practice and kept apart from real trades.'
         ]
       },
       {
-        heading: 'Reviewing',
+        heading: 'Results',
         items: [
-          'Performance Overview shows win rate, total profit/loss, profit factor and your current streak.',
-          'Recent Activity lists your latest trades and notes.',
-          'Export Data downloads your trades and notes as JSON, CSV, text or PDF.'
+          'Results are net of fees. Fees are estimated from the exchange you pick, or you can type the real figure.',
+          'With a stop loss, each trade also shows an R-multiple: +2R made twice what you risked, -1R is a full stop-out.',
+          'Profit factor is total profit divided by total loss. Above 1 means you are making money.',
+          'The equity curve shows your running result and deepest drawdown; the calendar shows each day.'
+        ]
+      },
+      {
+        heading: 'Learning from it',
+        items: [
+          'When you log or close a trade, tag the setup, how you felt, whether you followed your plan and any mistakes.',
+          'Your edge groups your trades by those tags, pair, side and time, and lists what is working and what is costing you.',
+          'Your rules: set a risk limit, daily loss limit, trades per day and more. Trades that break them are flagged, and the Calculator warns you.',
+          'AI review writes a short coach\'s read of the last 7 or 30 days. Only summary numbers and tags are sent, never your notes.'
         ]
       }
     ],
-    tip: 'Write down why you took each trade. Reviewing your reasons, not just the results, is what improves your trading.'
+    tip: 'Use the Real / Practice switch to keep paper results apart. Export to CSV, JSON, text or a printable PDF report.'
   }
 }

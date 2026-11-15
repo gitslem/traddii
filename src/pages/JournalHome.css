@@ -1795,7 +1795,8 @@
   flex-wrap: wrap;
 }
 
-.ji-account-switch {
+.ji-account-switch,
+.ji-segmented {
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.25rem;
@@ -1804,7 +1805,8 @@
   border-radius: var(--radius-full);
 }
 
-.ji-account-switch button {
+.ji-account-switch button,
+.ji-segmented button {
   padding: 0.4rem 0.9rem;
   border: none;
   border-radius: var(--radius-full);
@@ -1815,12 +1817,14 @@
   cursor: pointer;
 }
 
-.ji-account-switch button.active {
+.ji-account-switch button.active,
+.ji-segmented button.active {
   background: var(--violet-gradient);
   color: #fff;
 }
 
-.ji-account-switch button:focus-visible {
+.ji-account-switch button:focus-visible,
+.ji-segmented button:focus-visible {
   outline: 2px solid var(--violet-ink);
   outline-offset: 2px;
 }

@@ -1519,3 +1519,12 @@
   background: var(--color-warning-alpha-10);
   color: var(--warning-ink);
 }
+
+.trade-rule-break {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-alpha-10);
+  color: var(--danger-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

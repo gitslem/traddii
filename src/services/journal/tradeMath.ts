@@ -138,6 +138,16 @@ export const plannedRewardRisk = (t: Risked & Pick<Trade, 'takeProfit'>): number
 // Older trades stored only a calendar day, written as midnight UTC
 const DATE_ONLY = /T00:00:00(\.000)?Z$/
 
+/**
+ * A moment as stored on a trade. A real time that lands exactly on midnight
+ * UTC (09:00 in Tokyo, for example) is moved by 1 ms, so it is never mistaken
+ * for an older day-only date.
+ */
+export const toStoredDate = (d: Date): string => {
+  const iso = d.toISOString()
+  return DATE_ONLY.test(iso) ? new Date(d.getTime() + 1).toISOString() : iso
+}
+
 /** True when the stored value has a real time of day, not just a calendar day */
 export const hasTimeOfDay = (iso: string | null | undefined): boolean => !!iso && !DATE_ONLY.test(iso)
 

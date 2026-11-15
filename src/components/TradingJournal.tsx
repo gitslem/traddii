@@ -12,6 +12,7 @@ import { EXCHANGES } from '../config/exchanges'
 import type { Trade } from '../services/firestoreService'
 import { computeAnalytics, filterByAccount } from '../services/journal/analytics'
 import type { AccountMode } from '../services/journal/analytics'
+import type { RuleBreak } from '../services/journal/rules'
 import { entryMoment, hasTimeOfDay, outcomeOf, rMultiple, riskAmount } from '../services/journal/tradeMath'
 import { formatPnL, formatPrice, formatR, formatUsd } from '../utils/format'
 import TradeModal from './journal/TradeModal'
@@ -22,9 +23,11 @@ interface TradingJournalProps {
   compact?: boolean
   /** Show real trades, practice trades, or both */
   accountMode?: AccountMode
+  /** Rules each trade broke, by trade id */
+  ruleBreaks?: Map<string, RuleBreak[]>
 }
 
-const TradingJournal = ({ onTradesUpdate, compact = false, accountMode = 'all' }: TradingJournalProps = {}) => {
+const TradingJournal = ({ onTradesUpdate, compact = false, accountMode = 'all', ruleBreaks }: TradingJournalProps = {}) => {
   const { user, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
 
@@ -295,6 +298,7 @@ const TradingJournal = ({ onTradesUpdate, compact = false, accountMode = 'all' }
                 <TradeCard
                   key={trade.id}
                   trade={trade}
+                  breaks={ruleBreaks?.get(trade.id)}
                   onEdit={handleEditTrade}
                   onDelete={handleDeleteTrade}
                   onClose={handleCloseTrade}
@@ -358,12 +362,13 @@ const TradingJournal = ({ onTradesUpdate, compact = false, accountMode = 'all' }
 // Trade Card Component
 interface TradeCardProps {
   trade: Trade
+  breaks?: RuleBreak[]
   onEdit: (trade: Trade) => void
   onDelete: (tradeId: string) => void
   onClose: (trade: Trade) => void
 }
 
-const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
+const TradeCard = ({ trade, breaks, onEdit, onDelete, onClose }: TradeCardProps) => {
   const outcome = outcomeOf(trade)
   const isOpen = trade.status === 'open'
   const [baseCurrency, quoteCurrency] = trade.pair.split('/')
@@ -448,6 +453,12 @@ const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
         </div>
         <div className="trade-exchange">{EXCHANGES[trade.exchange]?.displayName ?? trade.exchange}</div>
         {trade.setup && <div className="trade-setup">{trade.setup}</div>}
+        {breaks && breaks.length > 0 && (
+          <div className="trade-rule-break" title={breaks.map(b => b.text).join(' ')}>
+            Broke {breaks.length === 1 ? 'a rule' : `${breaks.length} rules`}
+            <span className="ji-sr-only">: {breaks.map(b => b.text).join(' ')}</span>
+          </div>
+        )}
         {(trade.mistakes?.length ?? 0) > 0 && (
           <div className="trade-mistakes" title={trade.mistakes?.join(', ')}>
             {trade.mistakes?.length} mistake{trade.mistakes?.length === 1 ? '' : 's'}

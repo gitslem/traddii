@@ -10,7 +10,7 @@ import { paperTradingService } from '../paperTradingService'
 import type { PaperTrade } from '../paperTradingService'
 import type { NewTrade, Trade } from '../firestoreService'
 import { symbolToPair } from '../../config/pairs'
-import { classifyOutcome } from './tradeMath'
+import { classifyOutcome, toStoredDate } from './tradeMath'
 
 const CLOSE_REASONS: Record<NonNullable<PaperTrade['closeReason']>, string> = {
   manual: 'closed by hand',
@@ -44,8 +44,8 @@ export const paperTradeToJournal = (t: PaperTrade): NewTrade | null => {
     entryPrice: t.entryPrice,
     exitPrice: t.exitPrice,
     quantity: t.quantity,
-    entryDate: new Date(t.timestamp).toISOString(),
-    exitDate: new Date(t.exitTimestamp ?? t.timestamp).toISOString(),
+    entryDate: toStoredDate(new Date(t.timestamp)),
+    exitDate: toStoredDate(new Date(t.exitTimestamp ?? t.timestamp)),
     stopLoss: t.stopLoss ?? null,
     takeProfit: t.takeProfit ?? null,
     leverage: t.leverage,
@@ -75,7 +75,7 @@ export const bybitClosedPnlToJournal = (row: BybitClosedPnl, envName: string): N
   // Older responses have no fee fields; the gap between gross and net is fees (and funding)
   const fees = reportedFees > 0 ? reportedFees : Math.max(0, gross - net)
   const margin = (entryPrice * quantity) / leverage
-  const closedIso = new Date(closedAt).toISOString()
+  const closedIso = toStoredDate(new Date(closedAt))
   return {
     ...practiceBase,
     pair: symbolToPair(row.symbol),

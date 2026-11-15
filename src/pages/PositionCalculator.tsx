@@ -17,7 +17,10 @@ import PairSelect from '../components/PairSelect'
 import { isSupportedPair } from '../config/pairs'
 import { useAuth } from '../context/auth'
 import { firestoreService } from '../services/firestoreService'
-import { computeTradeResult } from '../services/journal/tradeMath'
+import { computeTradeResult, toStoredDate } from '../services/journal/tradeMath'
+import { EMPTY_RULES } from '../services/journal/rules'
+import type { TradingRules } from '../services/journal/rules'
+import { subscribeToRules } from '../services/journal/rulesStore'
 
 interface TakeProfitResult {
   name: string
@@ -129,6 +132,19 @@ const PositionCalculator = () => {
       // Storage unavailable (private mode) - settings just won't persist
     }
   }, [accountBalance, riskPercentage, cryptoPair, selectedExchange, accountType, feeRegion, useLeverage, leverage])
+  // Personal rules from the Journal, used as limits here
+  const { user } = useAuth()
+  const [rules, setRules] = useState<TradingRules>(EMPTY_RULES)
+  useEffect(() => {
+    if (!user?.uid) return
+    return subscribeToRules(user.uid, (next) => {
+      setRules(next)
+      // A first visit starts from the account size in the rules
+      if (next.accountSize !== null && saved.accountBalance === undefined) setAccountBalance(String(next.accountSize))
+      if (next.maxRiskPercent !== null && saved.riskPercentage === undefined) setRiskPercentage(String(next.maxRiskPercent))
+    })
+  }, [user?.uid, saved])
+
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false)
   const [showLeverage, setShowLeverage] = useState<boolean>(false)
 
@@ -288,7 +304,9 @@ const PositionCalculator = () => {
       }
     }
 
-    if (risk > 2) {
+    if (rules.maxRiskPercent !== null && risk > rules.maxRiskPercent) {
+      warnings.push({ type: 'warning', message: `Risk ${risk}% breaks your rule of ${rules.maxRiskPercent}% per trade` })
+    } else if (risk > 2) {
       warnings.push({ type: 'warning', message: `Risk ${risk}% is above the recommended 2%` })
     } else if (risk > 0 && risk <= 1) {
       warnings.push({ type: 'success', message: 'Risk is within the 1% guideline' })
@@ -316,6 +334,10 @@ const PositionCalculator = () => {
       warnings.push({ type: 'warning', message: `Leverage capped at the ${maxLeverageAllowed}x maximum` })
     }
 
+    if (rules.maxLeverage !== null && effectiveLeverage > rules.maxLeverage) {
+      warnings.push({ type: 'warning', message: `${effectiveLeverage}x breaks your rule of at most ${rules.maxLeverage}x leverage` })
+    }
+
     if (effectiveLeverage > 1) {
       if (effectiveLeverage >= 20) {
         warnings.push({ type: 'error', message: 'Extreme leverage risk!' })
@@ -334,7 +356,7 @@ const PositionCalculator = () => {
     }
 
     return warnings
-  }, [accountBalance, entryPrice, stopPrice, takeProfitPrice, tp2Price, tp3Price, riskPercentage, positionType, results, useLeverage, leverageAvailable, requestedLeverage, maxLeverageAllowed, effectiveLeverage])
+  }, [accountBalance, entryPrice, stopPrice, takeProfitPrice, tp2Price, tp3Price, riskPercentage, positionType, results, useLeverage, leverageAvailable, requestedLeverage, maxLeverageAllowed, effectiveLeverage, rules])
 
   const warnings = useMemo(() => validatePosition(), [validatePosition])
 
@@ -375,7 +397,6 @@ const PositionCalculator = () => {
   }
 
   // Save this setup to the Journal as an open trade (the exit is added there later)
-  const { user } = useAuth()
   const [journalLog, setJournalLog] = useState<{ state: 'saving' | 'saved' | 'error' | 'signin'; setup: string } | null>(null)
   const setupKey = [cryptoPair, positionType, entryPrice, stopPrice, takeProfitPrice, accountBalance, riskPercentage, effectiveLeverage, selectedExchange, accountType].join('|')
   const journalState = journalLog?.setup === setupKey ? journalLog.state : null
@@ -402,7 +423,7 @@ const PositionCalculator = () => {
         exitPrice: null,
         quantity,
         quantityType: 'base',
-        entryDate: new Date().toISOString(),
+        entryDate: toStoredDate(new Date()),
         exitDate: null,
         stopLoss: parseFloat(stopPrice),
         takeProfit: tp ? tp.price : null,

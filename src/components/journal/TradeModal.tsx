@@ -7,7 +7,7 @@ import { MAX_SETUP_LENGTH, MINDSETS, MISTAKES, SETUPS } from '../../config/journ
 import type { NewTrade, Trade } from '../../services/firestoreService'
 import {
   computeTradeResult, parseTradeDate, plannedRewardRisk, riskAmount, supportedMarket,
-  takerFeeRate, toLocalInput, tradeMarket
+  takerFeeRate, toLocalInput, toStoredDate, tradeMarket
 } from '../../services/journal/tradeMath'
 import { formatPnL, formatR, formatUsd } from '../../utils/format'
 import '../TradingJournal.css'
@@ -157,14 +157,14 @@ const TradeModal = ({ trade, intent = 'edit', onClose, onSave }: TradeModalProps
     }
 
     // An untouched date keeps its stored value, so older day-only trades stay day-only
-    const entryDate = trade && form.entryAt === initialEntryAt ? trade.entryDate : new Date(form.entryAt).toISOString()
+    const entryDate = trade && form.entryAt === initialEntryAt ? trade.entryDate : toStoredDate(new Date(form.entryAt))
     let exitDate: string | null = null
     if (exitPrice !== null) {
       if (form.exitAt) {
-        exitDate = trade?.exitDate && form.exitAt === initialExitAt ? trade.exitDate : new Date(form.exitAt).toISOString()
+        exitDate = trade?.exitDate && form.exitAt === initialExitAt ? trade.exitDate : toStoredDate(new Date(form.exitAt))
       } else {
         // No time entered: a trade that was already closed keeps what it had, a new close happens now
-        exitDate = trade?.status === 'closed' ? trade.exitDate ?? null : new Date().toISOString()
+        exitDate = trade?.status === 'closed' ? trade.exitDate ?? null : toStoredDate(new Date())
       }
     }
 

@@ -20,6 +20,13 @@ import TradeModal from '../components/journal/TradeModal'
 import ExportModal from '../components/journal/ExportModal'
 import TradeDetailModal from '../components/journal/TradeDetailModal'
 import EdgeReport from '../components/journal/EdgeReport'
+import RulesCard from '../components/journal/RulesCard'
+import EquityCurve from '../components/journal/EquityCurve'
+import PnLCalendar from '../components/journal/PnLCalendar'
+import WeeklyCoach from '../components/journal/WeeklyCoach'
+import { EMPTY_RULES, checkRules } from '../services/journal/rules'
+import type { TradingRules } from '../services/journal/rules'
+import { subscribeToRules } from '../services/journal/rulesStore'
 import PersonalNotes from '../components/PersonalNotes'
 import CryptoRecommendations from '../components/CryptoRecommendations'
 import PageGuide from '../components/PageGuide'
@@ -85,6 +92,7 @@ const JournalHome = () => {
   const [tradesPage, setTradesPage] = useState(1)
   const [notesPage, setNotesPage] = useState(1)
   const [showLogTrade, setShowLogTrade] = useState(false)
+  const [rules, setRules] = useState<TradingRules>(EMPTY_RULES)
   const [accountChoice, setAccountChoice] = useState<AccountMode | null>(null)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
@@ -96,6 +104,12 @@ const JournalHome = () => {
   const hasReal = trades.some(t => !t.isPractice)
   const accountMode: AccountMode = !hasPractice ? 'all' : accountChoice ?? (hasReal ? 'real' : 'practice')
   const shownTrades = useMemo(() => filterByAccount(trades, accountMode), [trades, accountMode])
+  const ruleBreaks = useMemo(() => checkRules(shownTrades, rules), [shownTrades, rules])
+
+  useEffect(() => {
+    if (!user?.uid) return
+    return subscribeToRules(user.uid, setRules)
+  }, [user?.uid])
 
   const importPractice = async () => {
     if (!user) return
@@ -391,7 +405,16 @@ const JournalHome = () => {
         </div>
       </div>
 
+      <div className="ji-charts">
+        <EquityCurve trades={shownTrades} />
+        <PnLCalendar trades={shownTrades} />
+      </div>
+
       <EdgeReport trades={shownTrades} />
+
+      <RulesCard userId={user.uid} rules={rules} trades={shownTrades} breaks={ruleBreaks} />
+
+      <WeeklyCoach userId={user.uid} trades={shownTrades} rules={rules} />
 
       {/* Crypto Recommendations */}
       <CryptoRecommendations />
@@ -573,7 +596,7 @@ const JournalHome = () => {
             </>
           ) : (
             <div className="full-component-view">
-              <TradingJournal onTradesUpdate={setTrades} compact={false} accountMode={accountMode} />
+              <TradingJournal onTradesUpdate={setTrades} compact={false} accountMode={accountMode} ruleBreaks={ruleBreaks} />
             </div>
           )}
         </div>
