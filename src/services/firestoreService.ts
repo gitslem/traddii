@@ -16,7 +16,7 @@ import { db } from '../config/firebase'
 
 export type TradeOutcome = 'win' | 'loss' | 'breakeven' | 'pending'
 export type TradeMarket = 'spot' | 'futures' | 'margin'
-export type TradeSource = 'manual' | 'calculator' | 'practice'
+export type TradeSource = 'manual' | 'calculator' | 'practice' | 'bot'
 
 /** Fields of a trade that the app sets when saving (everything except ids and timestamps) */
 export type NewTrade = Omit<Trade, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
@@ -132,6 +132,22 @@ class FirestoreService {
     } catch (error) {
       console.error('Error adding trades:', error)
       throw error
+    }
+  }
+
+  /**
+   * Add trades that carry an importId under a document id made from it, so
+   * the same trade written twice (e.g. from two open tabs) is stored once.
+   */
+  async addImportedTrades(userId: string, trades: (NewTrade & { importId: string })[]): Promise<void> {
+    if (trades.length === 0) return
+    const now = new Date().toISOString()
+    for (let i = 0; i < trades.length; i += 400) {
+      const batch = writeBatch(db)
+      for (const trade of trades.slice(i, i + 400)) {
+        batch.set(doc(db, this.collectionName, `${userId}_${trade.importId}`), stripUndefined({ ...trade, userId, createdAt: now, updatedAt: now }))
+      }
+      await batch.commit()
     }
   }
 

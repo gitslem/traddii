@@ -91,6 +91,48 @@ const fetchKlines = async (pair: string, interval: string, limit: number): Promi
   return Array.isArray(list) ? list.map(k => parseKline(k, tf.ms)).reverse() : null
 }
 
+/** Length of one candle in milliseconds, or null for an unknown interval */
+export const intervalMs = (interval: string): number | null => BYBIT_INTERVALS[interval]?.ms ?? null
+
+/** Bybit returns at most 1000 candles a request */
+const KLINE_PAGE = 1000
+
+/**
+ * Closed candles, oldest first, fetched a page at a time going back from now.
+ * Stops after `count` candles, or once it reaches `from` (an open time in ms),
+ * or at `max` candles, whichever comes first.
+ */
+export const fetchClosedCandles = async (
+  pair: string,
+  interval: string,
+  { count, from, max = 20_000 }: { count?: number; from?: number; max?: number }
+): Promise<CandleData[]> => {
+  const symbol = isSupportedPair(pair) ? pairToSymbol(pair) : null
+  const tf = BYBIT_INTERVALS[interval]
+  if (!symbol || !tf) throw new Error(`Unsupported pair or timeframe: ${pair} ${interval}`)
+  const wanted = Math.min(count ?? max, max)
+  const now = Date.now()
+  const byTime = new Map<number, CandleData>()
+  let end = now
+  while (byTime.size < wanted + 1) {
+    const response = await axios.get<{ retCode: number; retMsg: string; result?: { list?: RawKline[] } }>(`${BYBIT_API}/kline`, {
+      params: { category: 'linear', symbol, interval: tf.code, limit: KLINE_PAGE, end },
+      timeout: 10_000
+    })
+    if (response.data.retCode !== 0) throw new Error(response.data.retMsg || 'Bybit kline error')
+    const page = (response.data.result?.list ?? []).map(k => parseKline(k, tf.ms))
+    if (page.length === 0) break
+    for (const c of page) byTime.set(c.openTime, c)
+    const earliest = Math.min(...page.map(c => c.openTime))
+    if ((from !== undefined && earliest <= from) || page.length < KLINE_PAGE) break
+    end = earliest - 1
+  }
+  const closed = [...byTime.values()]
+    .filter(c => c.closeTime < now && (from === undefined || c.openTime >= from))
+    .sort((a, b) => a.openTime - b.openTime)
+  return closed.slice(-wanted)
+}
+
 /**
  * Fetch OHLCV data for a trading pair: the live candle plus recent closed
  * candles (enough for two-candle patterns, average volume and trend context)

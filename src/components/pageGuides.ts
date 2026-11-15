@@ -5,7 +5,7 @@ export interface PageGuideContent {
   tip?: string
 }
 
-export type GuideKey = 'calculator' | 'market' | 'price' | 'practice' | 'journal'
+export type GuideKey = 'calculator' | 'market' | 'price' | 'practice' | 'journal' | 'strategies'
 
 export const PAGE_GUIDES: Record<GuideKey, PageGuideContent> = {
   calculator: {
@@ -157,5 +157,42 @@ export const PAGE_GUIDES: Record<GuideKey, PageGuideContent> = {
       }
     ],
     tip: 'Use the Real / Practice switch to keep paper results apart. Export to CSV, JSON, text or a printable PDF report.'
+  },
+  strategies: {
+    title: 'Strategies',
+    intro: 'Turn a trading idea into fixed rules, see how they would have traded the past, then let them paper-trade new candles to find out whether they really work.',
+    sections: [
+      {
+        heading: 'Backtest',
+        items: [
+          'Start from one of the ideas, or pick a pair, a timeframe and a direction and switch on the entry conditions. All of them must hold on the same closed candle.',
+          'Tick "Also test on the 8 most traded pairs" for many more trades, and to check the idea is not specific to one coin.',
+          'The trend conditions use the same swing highs and lows as the Market page; the candle conditions use the patterns from the Price page.',
+          'Each trade opens at the next candle\'s open, risks the same share of a fixed account, and pays the Bybit futures taker fee plus slippage on the way in and out.',
+          'If one candle touched both the stop and the target, the stop is counted, because the order inside a candle is unknown.'
+        ]
+      },
+      {
+        heading: 'Reading the result',
+        items: [
+          'Fewer than 30 trades says little: luck alone can produce almost any result. The likely range under Average R shows how sure the result is.',
+          'First half vs second half: rules that only worked in one half may not keep working.',
+          'Random entries: the same stops, targets and sizing with entries on random candles. They usually lose, because fees are paid on every trade; that is the bar to beat. Rules that beat random but still lose have some edge that costs eat.',
+          'Average R is the result per trade in units of the amount risked: +0.2R on 1% risk is +0.2% of the account a trade, after fees.'
+        ]
+      },
+      {
+        heading: 'Forward test',
+        items: [
+          'Sign in and save a strategy to lock its rules. From the next candle on it paper-trades new candles only.',
+          'While any Traddii tab is open it trades each candle as it closes. A scheduled check also runs about every 15 minutes, and whenever you come back it replays any candles it missed, so nothing is lost.',
+          'Turn on alerts to get a notification when a bot signals, opens or closes a trade. With a Traddii tab open they arrive at the candle close; with every tab closed, a scheduled check sends them about every 15 minutes.',
+          'Mirror on Bybit Demo: with your Demo keys connected on the Practice page, each new bot entry is also placed on your Demo account, same size, with its stop and target. This needs a Traddii tab open in that browser; entries made while it is closed are skipped, never placed late.',
+          'Closed bot trades go to your Journal as practice trades, with the strategy name as the setup, so "Your edge" can compare strategies.',
+          'Changing the rules saves a new version with a fresh forward test. The old version\'s trades keep their version tag.'
+        ]
+      }
+    ],
+    tip: 'Tweaking rules until a backtest looks good mostly fits the past. Judge a strategy by its forward test, after at least 30 trades.'
   }
 }

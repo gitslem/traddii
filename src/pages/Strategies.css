@@ -1,0 +1,608 @@
+/* Strategies page. Prefixed sl- because Vite bundles all CSS globally. */
+
+.sl-page {
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 3rem) 4rem;
+  position: relative;
+}
+
+.sl-hero {
+  position: relative;
+  text-align: center;
+  padding: 2.5rem 1rem 2rem;
+}
+
+.sl-hero-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--violet-gradient);
+  box-shadow: 0 16px 48px rgba(139, 92, 246, 0.35);
+}
+
+.sl-hero h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.sl-hero p {
+  max-width: 640px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+}
+
+.sl-layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 440px) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.sl-output {
+  min-width: 0;
+}
+
+/* ---------- Form ---------- */
+.sl-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+}
+
+.sl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.sl-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.sl-hint {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-tertiary);
+}
+
+.sl-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.625rem 0.875rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+
+/* The pair picker's button, styled like the other fields */
+.sl-form .pair-select-trigger.sl-pair {
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.sl-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+}
+
+.sl-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.sl-seg button {
+  min-height: 36px;
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sl-seg button[aria-pressed='true'] {
+  background: var(--violet-gradient);
+  color: #fff;
+}
+
+.sl-seg button:focus-visible {
+  outline: 2px solid var(--violet-ink);
+  outline-offset: 2px;
+}
+
+.sl-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 1rem 1rem 1.125rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  min-width: 0;
+}
+
+.sl-fieldset legend {
+  padding: 0 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--violet-ink);
+}
+
+.sl-check {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.sl-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+  accent-color: #8b5cf6;
+}
+
+.sl-check span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.sl-check strong {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.sl-check small {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-tertiary);
+}
+
+.sl-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+}
+
+.sl-run {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--color-border);
+}
+
+.sl-run-btn {
+  justify-content: center;
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.sl-problems {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+/* ---------- Presets ---------- */
+.sl-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.sl-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sl-preset {
+  min-height: 36px;
+  padding: 0.4rem 0.875rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sl-preset:hover {
+  border-color: #8b5cf6;
+}
+
+.sl-preset:focus-visible {
+  outline: 2px solid var(--violet-ink);
+  outline-offset: 2px;
+}
+
+/* ---------- Results ---------- */
+.sl-basket-btn {
+  margin-top: 0.875rem;
+}
+
+.sl-tile .sl-tile-sub {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+}
+
+.sl-pairs {
+  margin-top: 1.25rem;
+}
+
+.sl-alert-note {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.85rem;
+}
+.sl-h3 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.sl-stale {
+  margin-top: 0;
+}
+
+.sl-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+}
+
+.sl-tiles.compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 0.75rem;
+}
+
+.sl-tile {
+  padding: 0.75rem 0.875rem;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  min-width: 0;
+}
+
+.sl-tile dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+}
+
+.sl-tile dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sl-page .profit {
+  color: var(--success-ink);
+}
+
+.sl-page .loss {
+  color: var(--danger-ink);
+}
+
+.sl-checks {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.sl-checks strong {
+  color: var(--color-text-primary);
+}
+
+.sl-equity {
+  margin-top: 1.5rem;
+}
+
+/* The equity chart is a full card in the Journal; here it sits inside one */
+.sl-equity .ji-card {
+  margin-bottom: 0;
+  padding: 1.25rem;
+  border-width: 1px;
+}
+
+.sl-toggle {
+  margin-top: 1.25rem;
+}
+
+.sl-trades {
+  margin-top: 1rem;
+}
+
+.sl-save {
+  margin-top: 1.5rem;
+  padding-top: 0.25rem;
+  border-top: 2px solid var(--color-border);
+}
+
+.sl-save-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 0.875rem;
+}
+
+.sl-save-row .sl-field {
+  flex: 1 1 220px;
+}
+
+.sl-save-row .ji-button {
+  min-height: 44px;
+}
+
+.sl-fine {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+}
+
+.sl-placeholder h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.sl-placeholder ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.sl-placeholder strong {
+  color: var(--color-text-primary);
+}
+
+/* ---------- Saved strategies ---------- */
+.sl-saved {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sl-strategy {
+  padding: 1.25rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.sl-strategy.editing {
+  border-color: #8b5cf6;
+}
+
+.sl-strategy-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.sl-strategy-head > div:first-child {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.sl-strategy h3 {
+  margin: 0 0 0.375rem;
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+}
+
+.sl-strategy-head p {
+  margin: 0 0 0.25rem;
+}
+
+.sl-version {
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--violet-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.sl-version.paused {
+  background: var(--color-warning-alpha-10);
+  color: var(--warning-ink);
+}
+
+.sl-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.sl-actions .ji-button {
+  min-height: 40px;
+}
+
+.sl-actions .ji-button.danger {
+  background: var(--danger-ink);
+  color: #fff;
+}
+
+.sl-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.875rem;
+}
+
+.sl-progress-bar {
+  flex: 0 0 160px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.sl-progress-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--violet-gradient);
+}
+
+.sl-open {
+  margin: 0.875rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.sl-open strong {
+  color: var(--color-text-primary);
+}
+
+.sl-checked {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* ---------- Bybit Demo mirroring ---------- */
+.sl-mirror {
+  margin-top: 1rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.sl-mirror-state {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.sl-mirror-state > svg {
+  color: var(--violet-ink);
+  flex-shrink: 0;
+}
+
+.sl-mirror-state strong {
+  color: var(--color-text-primary);
+}
+
+.sl-mirror-state .ji-button {
+  margin-left: auto;
+  min-height: 36px;
+}
+
+.sl-mirror-note {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.sl-mirror-ask p {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1100px) {
+  .sl-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .sl-row,
+  .sl-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sl-tiles.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sl-tile dd {
+    font-size: 1.05rem;
+  }
+
+  /* Long options stack instead of wrapping inside a pill */
+  .sl-seg {
+    border-radius: var(--radius-lg);
+  }
+
+  .sl-seg button {
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .sl-fieldset {
+    padding: 0.875rem;
+  }
+}

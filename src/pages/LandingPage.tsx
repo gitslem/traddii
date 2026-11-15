@@ -28,7 +28,12 @@ const TOOLS = [
     chips: ['Market & limit orders', 'Take profit · stop loss', 'Bybit Demo Trading']
   },
   {
-    n: '05', name: 'Journal', to: '/journal', question: 'What actually works for me?',
+    n: '05', name: 'Strategies', to: '/strategies', question: 'Does my idea hold up?',
+    text: 'Write a strategy as rules, backtest it on past Bybit candles against random entries, then let it paper-trade new candles.',
+    chips: ['Backtest after fees', '8-pair test', 'Forward test', 'Alerts']
+  },
+  {
+    n: '06', name: 'Journal', to: '/journal', question: 'What actually works for me?',
     text: 'Results after fees, R-multiples, practice trades kept apart from real ones, and a report on your own patterns.',
     chips: ['Your edge', 'Personal rules', 'CSV · PDF export']
   }
@@ -53,7 +58,7 @@ const LandingPage = () => (
             </Link>
             <a className="ld-btn line" href={GITHUB} target="_blank" rel="noopener noreferrer">View the code</a>
           </div>
-          <p className="ld-note">No sign-up for the Calculator, Market, Price and Practice pages. The Journal saves to your Google account.</p>
+          <p className="ld-note">No sign-up for the Calculator, Market, Price, Practice or backtests. The Journal and forward tests save to your Google account.</p>
         </div>
 
         <figure className="ld-slip" aria-label="Example trade plan from the calculator">
@@ -99,7 +104,7 @@ const LandingPage = () => (
     {/* The tools */}
     <section className="ld-wrap ld-section" id="tools" aria-labelledby="ld-tools-title">
       <div className="ld-cap">The tools</div>
-      <h2 className="ld-h ld-h2 ld-tools-title" id="ld-tools-title">Five pages. Each answers one question.</h2>
+      <h2 className="ld-h ld-h2 ld-tools-title" id="ld-tools-title">Six pages. Each answers one question.</h2>
       {TOOLS.map(tool => (
         <article key={tool.n} className="ld-tool">
           <div className="ld-mono ld-muted">{tool.n}</div>

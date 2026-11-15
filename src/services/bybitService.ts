@@ -535,6 +535,25 @@ class BybitService {
     return true
   }
 
+  /** Order size and price steps for one USDT perpetual */
+  async getInstrument(symbol: string): Promise<{ minOrderQty: number; qtyStep: number; tickSize: number; maxLeverage: number }> {
+    const result = await this.makeRequest(
+      '/v5/market/instruments-info',
+      'GET',
+      '',
+      { category: 'linear', symbol },
+      false
+    ) as { list: { lotSizeFilter?: { minOrderQty?: string; qtyStep?: string }; priceFilter?: { tickSize?: string }; leverageFilter?: { maxLeverage?: string } }[] }
+    const item = result.list?.[0]
+    if (!item) throw new Error(`${symbol} is not traded on Bybit`)
+    return {
+      minOrderQty: parseFloat(item.lotSizeFilter?.minOrderQty ?? '') || 0.001,
+      qtyStep: parseFloat(item.lotSizeFilter?.qtyStep ?? '') || 0.001,
+      tickSize: parseFloat(item.priceFilter?.tickSize ?? '') || 0.01,
+      maxLeverage: parseFloat(item.leverageFilter?.maxLeverage ?? '') || 10
+    }
+  }
+
   // Get available trading pairs
   async getSymbols(): Promise<{ symbol: string; baseCoin: string; quoteCoin: string; minOrderQty: string; qtyStep: string }[]> {
     const result = await this.makeRequest(

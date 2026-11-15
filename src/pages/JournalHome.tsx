@@ -27,6 +27,7 @@ import WeeklyCoach from '../components/journal/WeeklyCoach'
 import { EMPTY_RULES, checkRules } from '../services/journal/rules'
 import type { TradingRules } from '../services/journal/rules'
 import { subscribeToRules } from '../services/journal/rulesStore'
+import { onReplay } from '../services/strategy/forward'
 import PersonalNotes from '../components/PersonalNotes'
 import CryptoRecommendations from '../components/CryptoRecommendations'
 import PageGuide from '../components/PageGuide'
@@ -155,6 +156,16 @@ const JournalHome = () => {
       }
     }
   }, [user, isAuthenticated, loading, navigate])
+
+  // Forward-tested strategies catch up in the background (StrategyWatcher); say when they add trades
+  useEffect(() => onReplay(r => {
+    if (r.sent > 0) {
+      setImportMessage({
+        kind: 'ok',
+        text: `Your "${r.name}" bot closed ${r.sent} new trade${r.sent === 1 ? '' : 's'}. ${r.sent === 1 ? 'It was' : 'They were'} added as practice trades.`
+      })
+    }
+  }), [])
 
   const analytics = useMemo(() => computeAnalytics(shownTrades), [shownTrades])
 

@@ -12,6 +12,8 @@ import PositionCalculator from './pages/PositionCalculator'
 import MarketStructure from './pages/MarketStructure'
 import PriceActionAnalysis from './pages/PriceActionAnalysis'
 import PaperTrading from './pages/PaperTrading'
+import Strategies from './pages/Strategies'
+import StrategyWatcher from './components/strategy/StrategyWatcher'
 import Support from './pages/Support'
 import FAQ from './pages/FAQ'
 import Terms from './pages/Terms'
@@ -23,6 +25,7 @@ function App() {
     <Router>
       <AuthProvider>
         <ScrollToTop />
+        <StrategyWatcher />
         <div className="app">
           <Navigation />
           <Routes>
@@ -47,6 +50,11 @@ function App() {
             <Route path="/paper-trading" element={
               <main className="tool-main">
                 <PaperTrading />
+              </main>
+            } />
+            <Route path="/strategies" element={
+              <main className="tool-main">
+                <Strategies />
               </main>
             } />
             <Route path="/about" element={<About />} />

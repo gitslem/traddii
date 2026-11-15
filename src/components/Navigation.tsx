@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, Calculator, TrendingUp, Target, Menu, X, BookOpen, LogIn, LogOut, User, Play, Sun, Moon } from 'lucide-react'
+import { Home, Calculator, TrendingUp, Target, Menu, X, BookOpen, LogIn, LogOut, User, Play, Sun, Moon, FlaskConical } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/auth'
 import { useTheme } from '../context/theme'
@@ -20,7 +20,8 @@ const Navigation = () => {
     { path: '/calculator', label: 'Calculator', icon: <Calculator size={20} /> },
     { path: '/market-structure', label: 'Market', icon: <TrendingUp size={20} /> },
     { path: '/price-action', label: 'Price', icon: <Target size={20} /> },
-    { path: '/paper-trading', label: 'Practice', icon: <Play size={20} /> }
+    { path: '/paper-trading', label: 'Practice', icon: <Play size={20} /> },
+    { path: '/strategies', label: 'Strategies', icon: <FlaskConical size={20} /> }
   ]
 
   const isActive = (path: string) => {
