@@ -471,6 +471,20 @@ class PaperTradingService {
   }
 
   /**
+   * Closed trades straight from storage, without creating an account for a
+   * user who has never practised (used by the Journal import)
+   */
+  peekClosedTrades(userId: string): PaperTrade[] {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_PREFIX + userId)
+      const account = stored ? JSON.parse(stored) as PaperAccount : null
+      return (account?.trades ?? []).filter(t => t.status === 'closed' && t.exitPrice !== undefined)
+    } catch {
+      return []
+    }
+  }
+
+  /**
    * Get account statistics
    */
   getAccountStats(userId: string): {

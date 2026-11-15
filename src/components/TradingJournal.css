@@ -1395,3 +1395,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+.trade-r {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.trade-r.profit {
+  color: var(--success-ink);
+}
+
+.trade-r.loss {
+  color: var(--danger-ink);
+}

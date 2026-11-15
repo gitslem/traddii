@@ -1466,3 +1466,25 @@
 .calculator-page .input-group .pair-select-trigger[aria-expanded="true"] {
   border-color: #d4af37;
 }
+
+/* Log to Journal */
+.calculator-page .log-to-journal-btn {
+  margin-top: 0.75rem;
+  background: transparent;
+  border: 2px solid var(--gold-ink);
+  color: var(--gold-ink);
+  box-shadow: none;
+}
+
+.calculator-page .journal-log-status {
+  margin: 0.5rem 0 0;
+  min-height: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.calculator-page .journal-log-status a {
+  color: var(--gold-ink);
+  font-weight: 700;
+}

@@ -5,12 +5,14 @@ import {
   Calendar, DollarSign, X, Pin, List, Grid, Plus,
   Target, Activity, Flame, BarChart3,
   ArrowUpRight, ArrowDownRight, Clock, Zap,
-  PieChart, Trophy, AlertCircle
+  PieChart, Trophy, AlertCircle, Upload
 } from 'lucide-react'
 import { useAuth } from '../context/auth'
 import { firestoreService } from '../services/firestoreService'
 import type { Trade, JournalNote } from '../services/firestoreService'
-import { computeAnalytics } from '../services/journal/analytics'
+import { computeAnalytics, filterByAccount } from '../services/journal/analytics'
+import type { AccountMode } from '../services/journal/analytics'
+import { findPracticeTrades } from '../services/journal/practiceImport'
 import { entryMoment, outcomeOf } from '../services/journal/tradeMath'
 import { formatDuration, formatPnL, formatPrice, formatR, formatUsd } from '../utils/format'
 import TradingJournal from '../components/TradingJournal'
@@ -82,7 +84,43 @@ const JournalHome = () => {
   const [tradesPage, setTradesPage] = useState(1)
   const [notesPage, setNotesPage] = useState(1)
   const [showLogTrade, setShowLogTrade] = useState(false)
+  const [accountChoice, setAccountChoice] = useState<AccountMode | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importMessage, setImportMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   const itemsPerPage = 5
+
+  // Practice trades are kept apart from real ones. Until the user chooses,
+  // show real trades, or practice when that is all there is.
+  const hasPractice = trades.some(t => t.isPractice)
+  const hasReal = trades.some(t => !t.isPractice)
+  const accountMode: AccountMode = !hasPractice ? 'all' : accountChoice ?? (hasReal ? 'real' : 'practice')
+  const shownTrades = useMemo(() => filterByAccount(trades, accountMode), [trades, accountMode])
+
+  const importPractice = async () => {
+    if (!user) return
+    setImporting(true)
+    setImportMessage(null)
+    try {
+      const found = await findPracticeTrades(user.uid, trades)
+      if (found.trades.length > 0) await firestoreService.addTrades(user.uid, found.trades)
+      const parts = [
+        found.paperCount > 0 ? `${found.paperCount} paper` : '',
+        found.bybitCount > 0 ? `${found.bybitCount} Bybit` : ''
+      ].filter(Boolean).join(' and ')
+      const text = found.trades.length > 0
+        ? `Imported ${found.trades.length} practice trade${found.trades.length === 1 ? '' : 's'} (${parts}).`
+        : 'No new closed Practice trades to import. Paper trades are read from this browser.'
+      setImportMessage(found.bybitError
+        ? { kind: 'error', text: `${text} Bybit trades could not be read: ${found.bybitError}` }
+        : { kind: 'ok', text })
+      if (found.trades.length > 0) setAccountChoice('practice')
+    } catch (error) {
+      console.error('Import error:', error)
+      setImportMessage({ kind: 'error', text: 'The import failed. Check your connection and try again.' })
+    } finally {
+      setImporting(false)
+    }
+  }
 
   useEffect(() => {
     if (loading) return
@@ -103,12 +141,12 @@ const JournalHome = () => {
     }
   }, [user, isAuthenticated, loading, navigate])
 
-  const analytics = useMemo(() => computeAnalytics(trades), [trades])
+  const analytics = useMemo(() => computeAnalytics(shownTrades), [shownTrades])
 
   // Get recent activity
   const recentActivity = useMemo(() => {
     const allItems = [
-      ...trades.map(t => ({
+      ...shownTrades.map(t => ({
         id: t.id,
         type: 'trade' as const,
         title: t.pair,
@@ -129,7 +167,7 @@ const JournalHome = () => {
     ]
 
     return allItems.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 8)
-  }, [trades, notes])
+  }, [shownTrades, notes])
 
   if (loading) {
     return (
@@ -148,10 +186,10 @@ const JournalHome = () => {
   }
 
   // Pagination for trades
-  const totalTradesPages = Math.ceil(trades.length / itemsPerPage)
-  const indexOfLastTrade = tradesPage * itemsPerPage
+  const totalTradesPages = Math.ceil(shownTrades.length / itemsPerPage)
+  const indexOfLastTrade = Math.min(tradesPage, Math.max(1, totalTradesPages)) * itemsPerPage
   const indexOfFirstTrade = indexOfLastTrade - itemsPerPage
-  const currentTrades = trades.slice(indexOfFirstTrade, indexOfLastTrade)
+  const currentTrades = shownTrades.slice(indexOfFirstTrade, indexOfLastTrade)
 
   // Pagination for notes
   const totalNotesPages = Math.ceil(notes.length / itemsPerPage)
@@ -223,6 +261,20 @@ const JournalHome = () => {
       <div className="performance-dashboard">
         <div className="dashboard-header">
           <h2><BarChart3 size={24} /> Performance Overview</h2>
+          {hasPractice && (
+            <div className="ji-account-switch" role="group" aria-label="Which trades to show">
+              {([['real', 'Real'], ['practice', 'Practice'], ['all', 'All']] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  className={accountMode === mode ? 'active' : ''}
+                  aria-pressed={accountMode === mode}
+                  onClick={() => { setAccountChoice(mode); setTradesPage(1) }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="stats-grid">
           <div className="stat-card primary">
@@ -406,6 +458,15 @@ const JournalHome = () => {
                 <Plus size={18} />
                 <span>Manage Trades</span>
               </button>
+              <button
+                className="add-item-btn"
+                onClick={importPractice}
+                disabled={importing}
+                title="Bring in closed trades from the Practice page"
+              >
+                <Upload size={18} />
+                <span>{importing ? 'Importing…' : 'Import from Practice'}</span>
+              </button>
               <div className="view-toggle">
                 <button
                   className={`toggle-btn ${tradesView === 'recent' ? 'active' : ''}`}
@@ -422,9 +483,15 @@ const JournalHome = () => {
                   <List size={16} />
                 </button>
               </div>
-              <span className="section-count">{trades.length} total</span>
+              <span className="section-count">{shownTrades.length} {accountMode === 'all' ? 'total' : accountMode}</span>
             </div>
           </div>
+
+          {importMessage && (
+            <p className={`export-message ${importMessage.kind} ji-import-message`} role={importMessage.kind === 'error' ? 'alert' : 'status'}>
+              {importMessage.text}
+            </p>
+          )}
 
           {tradesView === 'recent' ? (
             <>
@@ -451,6 +518,7 @@ const JournalHome = () => {
                     >
                       <div className="card-header">
                         <span className="card-title">{trade.pair}</span>
+                        {trade.isPractice && <span className="ji-practice-badge">Practice</span>}
                         <span className={`card-badge ${trade.type}`}>{trade.type}</span>
                       </div>
                       <div className="card-body">
@@ -502,7 +570,7 @@ const JournalHome = () => {
             </>
           ) : (
             <div className="full-component-view">
-              <TradingJournal onTradesUpdate={setTrades} compact={false} />
+              <TradingJournal onTradesUpdate={setTrades} compact={false} accountMode={accountMode} />
             </div>
           )}
         </div>

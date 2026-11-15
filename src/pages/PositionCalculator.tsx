@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './PositionCalculator.css'
 import LivePriceCard from '../components/LivePriceCard'
 import FloatingExchangeSelector from '../components/FloatingExchangeSelector'
@@ -11,10 +11,13 @@ import { formatPrice } from '../utils/format'
 import {
   Calculator, TrendingUp, TrendingDown, Shield, AlertTriangle,
   DollarSign, Percent, Target, Zap, ChevronDown, ChevronUp,
-  BarChart3, Activity, Wallet, Scale, Info, CheckCircle2, XCircle, Send
+  BarChart3, Activity, Wallet, Scale, Info, CheckCircle2, XCircle, Send, BookOpen
 } from 'lucide-react'
 import PairSelect from '../components/PairSelect'
 import { isSupportedPair } from '../config/pairs'
+import { useAuth } from '../context/auth'
+import { firestoreService } from '../services/firestoreService'
+import { computeTradeResult } from '../services/journal/tradeMath'
 
 interface TakeProfitResult {
   name: string
@@ -369,6 +372,59 @@ const PositionCalculator = () => {
     const tp = results.takeProfitResults[0]
     if (tp) params.set('tp', String(tp.price))
     navigate(`/paper-trading?${params.toString()}`)
+  }
+
+  // Save this setup to the Journal as an open trade (the exit is added there later)
+  const { user } = useAuth()
+  const [journalLog, setJournalLog] = useState<{ state: 'saving' | 'saved' | 'error' | 'signin'; setup: string } | null>(null)
+  const setupKey = [cryptoPair, positionType, entryPrice, stopPrice, takeProfitPrice, accountBalance, riskPercentage, effectiveLeverage, selectedExchange, accountType].join('|')
+  const journalState = journalLog?.setup === setupKey ? journalLog.state : null
+
+  const logToJournal = async () => {
+    if (!results) return
+    if (!user) {
+      setJournalLog({ state: 'signin', setup: setupKey })
+      return
+    }
+    const entry = parseFloat(entryPrice)
+    const quantity = Number(formatQty(results.quantity))
+    const tp = results.takeProfitResults[0]
+    const open = computeTradeResult({
+      type: positionType, entryPrice: entry, exitPrice: null, baseQty: quantity,
+      leverage: effectiveLeverage, exchange: selectedExchange, market: accountType, manualFees: null
+    })
+    setJournalLog({ state: 'saving', setup: setupKey })
+    try {
+      await firestoreService.addTrade(user.uid, {
+        pair: cryptoPair,
+        type: positionType,
+        entryPrice: entry,
+        exitPrice: null,
+        quantity,
+        quantityType: 'base',
+        entryDate: new Date().toISOString(),
+        exitDate: null,
+        stopLoss: parseFloat(stopPrice),
+        takeProfit: tp ? tp.price : null,
+        leverage: effectiveLeverage,
+        exchange: selectedExchange,
+        market: accountType,
+        status: open.status,
+        outcome: open.outcome,
+        profitLoss: 0,
+        profitLossPercent: 0,
+        fees: open.fees,
+        feesManual: false,
+        notes: `Planned in the Calculator: risking $${results.riskAmount.toFixed(2)} (${riskPercentage}% of $${parseFloat(accountBalance).toLocaleString()})${tp ? `, reward to risk 1:${tp.rrRatio.toFixed(2)}` : ''}.`,
+        tags: [],
+        screenshots: [],
+        source: 'calculator'
+      })
+      setJournalLog({ state: 'saved', setup: setupKey })
+    } catch (error) {
+      console.error('Journal save error:', error)
+      setJournalLog({ state: 'error', setup: setupKey })
+    }
   }
 
   const handleUseCurrentPrice = (price: number) => {
@@ -919,6 +975,21 @@ const PositionCalculator = () => {
                   <Send size={18} />
                   Practice this trade
                 </button>
+
+                <button
+                  className="send-to-practice-btn log-to-journal-btn"
+                  onClick={logToJournal}
+                  disabled={warnings.some(w => w.type === 'error') || journalState === 'saving' || journalState === 'saved'}
+                  title={warnings.some(w => w.type === 'error') ? 'Fix the errors above first' : 'Save this setup to your Journal as an open trade'}
+                >
+                  <BookOpen size={18} />
+                  {journalState === 'saving' ? 'Saving…' : journalState === 'saved' ? 'Saved to Journal' : 'Log to Journal'}
+                </button>
+                <p className="journal-log-status" aria-live="polite">
+                  {journalState === 'saved' && <>Saved as an open trade. <Link to="/journal">Open your Journal</Link> to add the exit when it closes.</>}
+                  {journalState === 'signin' && <><Link to="/login">Sign in</Link> to save trades to your Journal.</>}
+                  {journalState === 'error' && 'Could not save to the Journal. Check your connection and try again.'}
+                </p>
               </>
             ) : (
               <div className="no-results glass-card" aria-live="polite">

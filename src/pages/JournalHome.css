@@ -1785,3 +1785,62 @@
 .journal-home .detail-chart-link:hover {
   text-decoration: underline;
 }
+
+/* Real / Practice switch and practice import */
+.journal-home .dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ji-account-switch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.ji-account-switch button {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ji-account-switch button.active {
+  background: var(--violet-gradient);
+  color: #fff;
+}
+
+.ji-account-switch button:focus-visible {
+  outline: 2px solid var(--violet-ink);
+  outline-offset: 2px;
+}
+
+.ji-practice-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--violet-ink);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.journal-home .ji-import-message {
+  margin: 0 0 1.25rem;
+}
+
+.journal-home .add-item-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

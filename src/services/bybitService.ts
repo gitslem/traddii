@@ -79,6 +79,25 @@ export interface BybitOrder {
   stopLoss?: string
 }
 
+/** One closed position from /v5/position/closed-pnl (all values are strings) */
+export interface BybitClosedPnl {
+  symbol: string
+  orderId: string
+  /** Side of the closing order: Sell closed a long, Buy closed a short */
+  side: 'Buy' | 'Sell'
+  qty: string
+  closedSize?: string
+  avgEntryPrice: string
+  avgExitPrice: string
+  /** Net result, fees included */
+  closedPnl: string
+  leverage: string
+  openFee?: string
+  closeFee?: string
+  createdTime: string
+  updatedTime: string
+}
+
 export interface BybitBalance {
   coin: string
   walletBalance: string
@@ -457,6 +476,18 @@ class BybitService {
       userId,
       params
     ) as { list: BybitOrder[] }
+
+    return result.list || []
+  }
+
+  // Private API - Closed positions with their realised P&L (newest first)
+  async getClosedPnl(userId: string, limit: number = 100): Promise<BybitClosedPnl[]> {
+    const result = await this.makeRequest(
+      '/v5/position/closed-pnl',
+      'GET',
+      userId,
+      { category: 'linear', limit: limit.toString() }
+    ) as { list: BybitClosedPnl[] }
 
     return result.list || []
   }

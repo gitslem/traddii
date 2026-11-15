@@ -10,22 +10,26 @@ import { useAuth } from '../context/auth'
 import { firestoreService } from '../services/firestoreService'
 import { EXCHANGES } from '../config/exchanges'
 import type { Trade } from '../services/firestoreService'
-import { computeAnalytics } from '../services/journal/analytics'
-import { entryMoment, hasTimeOfDay, outcomeOf } from '../services/journal/tradeMath'
-import { formatPnL, formatPrice } from '../utils/format'
+import { computeAnalytics, filterByAccount } from '../services/journal/analytics'
+import type { AccountMode } from '../services/journal/analytics'
+import { entryMoment, hasTimeOfDay, outcomeOf, rMultiple, riskAmount } from '../services/journal/tradeMath'
+import { formatPnL, formatPrice, formatR, formatUsd } from '../utils/format'
 import TradeModal from './journal/TradeModal'
 import './TradingJournal.css'
 
 interface TradingJournalProps {
   onTradesUpdate?: (trades: Trade[]) => void
   compact?: boolean
+  /** Show real trades, practice trades, or both */
+  accountMode?: AccountMode
 }
 
-const TradingJournal = ({ onTradesUpdate, compact = false }: TradingJournalProps = {}) => {
+const TradingJournal = ({ onTradesUpdate, compact = false, accountMode = 'all' }: TradingJournalProps = {}) => {
   const { user, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
 
-  const [trades, setTrades] = useState<Trade[]>([])
+  const [allTrades, setTrades] = useState<Trade[]>([])
+  const trades = useMemo(() => filterByAccount(allTrades, accountMode), [allTrades, accountMode])
   const stats = useMemo(() => computeAnalytics(trades), [trades])
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null)
@@ -367,6 +371,8 @@ const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
   const currency = quantityType === 'base' ? baseCurrency : quoteCurrency
   const entered = entryMoment(trade)
   const pnlClass = outcome === 'win' ? 'profit' : outcome === 'loss' ? 'loss' : 'flat'
+  const r = rMultiple(trade)
+  const risk = riskAmount(trade)
 
   return (
     <div className={`tj-trade-card ${trade.status} ${outcome}`}>
@@ -379,6 +385,7 @@ const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
             <span className="trade-pair">{trade.pair}</span>
             <span className={`trade-type-badge ${trade.type}`}>{trade.type.toUpperCase()}</span>
             <span className="trade-leverage">{trade.leverage}x</span>
+            {trade.isPractice && <span className="ji-practice-badge">Practice</span>}
           </div>
           <div className="trade-details-row">
             <span className="trade-entry">Entry: ${formatPrice(trade.entryPrice)}</span>
@@ -400,13 +407,18 @@ const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
                 ? 'Breakeven'
                 : `${trade.profitLossPercent > 0 ? '+' : ''}${trade.profitLossPercent.toFixed(2)}%`}
             </span>
+            {r !== null && (
+              <span className={`trade-r ${r > 0 ? 'profit' : r < 0 ? 'loss' : ''}`} title="Result in units of the amount risked">
+                {formatR(r)}
+              </span>
+            )}
           </div>
         )}
 
         {isOpen && (
           <div className="trade-status-open">
             <Clock size={16} />
-            <span>Open</span>
+            <span>Open{risk !== null ? ` · risk ${formatUsd(risk)}` : ''}</span>
           </div>
         )}
 
