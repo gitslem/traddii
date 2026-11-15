@@ -132,6 +132,19 @@ const TradeDetailModal = ({ trade, onClose }: TradeDetailModalProps) => {
             </a>
           )}
 
+          {(trade.setup || trade.mindset || trade.followedPlan != null || trade.rating || (trade.mistakes?.length ?? 0) > 0) && (
+            <div className="detail-notes">
+              <h4>Review</h4>
+              <p className="ji-review-line">
+                {trade.setup && <span><strong>Setup</strong> {trade.setup}</span>}
+                {trade.mindset && <span><strong>Mindset</strong> {trade.mindset}</span>}
+                {trade.followedPlan != null && <span><strong>Plan</strong> {trade.followedPlan ? 'Followed' : 'Went off-plan'}</span>}
+                {trade.rating ? <span><strong>Execution</strong> {trade.rating}/5</span> : null}
+                {(trade.mistakes?.length ?? 0) > 0 && <span><strong>Mistakes</strong> {trade.mistakes?.join(', ')}</span>}
+              </p>
+            </div>
+          )}
+
           {trade.tags?.length > 0 && (
             <div className="detail-notes">
               <h4>Tags</h4>

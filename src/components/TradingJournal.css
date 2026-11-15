@@ -1409,3 +1409,113 @@
 .trade-r.loss {
   color: var(--danger-ink);
 }
+
+/* Review tags in the trade form */
+.tj-optional {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-tertiary);
+}
+
+.tj-chip-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.tj-modal .form-section .form-group + .form-group,
+.tj-modal .form-section .form-grid + .form-group {
+  margin-top: 1rem;
+}
+
+.tj-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tj-chip,
+.tj-modal .form-group .tj-chip-input {
+  padding: 0.5rem 0.875rem;
+  background: var(--color-surface-elevated);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.tj-chip {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.tj-chip:hover {
+  border-color: #3b82f6;
+}
+
+.tj-chip.active,
+.tj-modal .form-group .tj-chip-input.active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: #3b82f6;
+  color: var(--blue-ink);
+}
+
+.tj-chip.warn.active {
+  background: var(--color-warning-alpha-10);
+  border-color: var(--color-warning);
+  color: var(--warning-ink);
+}
+
+.tj-chip:focus-visible,
+.tj-star:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.tj-modal .form-group .tj-chip-input {
+  width: 7.5rem;
+}
+
+.tj-stars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tj-star {
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-border-light);
+  cursor: pointer;
+}
+
+.tj-star.active {
+  color: var(--color-warning);
+}
+
+.tj-star.active svg {
+  fill: currentColor;
+}
+
+.trade-setup,
+.trade-mistakes {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.trade-setup {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue-ink);
+}
+
+.trade-mistakes {
+  background: var(--color-warning-alpha-10);
+  color: var(--warning-ink);
+}

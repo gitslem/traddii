@@ -32,7 +32,8 @@ export const tradesToCSV = (trades: Trade[]): string => {
   const header = [
     'Entry Date', 'Exit Date', 'Pair', 'Type', 'Market', 'Exchange', 'Entry Price', 'Exit Price',
     'Stop Loss', 'Take Profit', 'Quantity', 'Quantity Type', 'Leverage', 'Net P&L', 'P&L %', 'Fees',
-    'R Multiple', 'Status', 'Outcome', 'Account', 'Notes', 'Tags', 'Chart'
+    'R Multiple', 'Status', 'Outcome', 'Account', 'Setup', 'Mindset', 'Followed Plan', 'Mistakes', 'Rating',
+    'Notes', 'Tags', 'Chart'
   ]
   const rows = trades.map(t => {
     const r = rMultiple(t)
@@ -41,6 +42,8 @@ export const tradesToCSV = (trades: Trade[]): string => {
       t.stopLoss ?? '', t.takeProfit ?? '', t.quantity, t.quantityType || 'base', t.leverage,
       round(t.profitLoss, 2), round(t.profitLossPercent, 2), round(t.fees || 0, 2),
       r === null ? '' : round(r, 2), t.status, outcomeOf(t), t.isPractice ? 'practice' : 'real',
+      safeText(t.setup || ''), t.mindset || '', t.followedPlan == null ? '' : t.followedPlan ? 'yes' : 'no',
+      (t.mistakes || []).join(', '), t.rating ?? '',
       safeText(t.notes || ''), safeText((t.tags || []).join(', ')), t.chartUrl ?? ''
     ])
   })
@@ -106,6 +109,11 @@ export const journalToText = (trades: Trade[], notes: JournalNote[]): string => 
       }
       text += `Status: ${trade.status}\n`
       text += `Date: ${dateText(trade)}\n`
+      if (trade.setup) text += `Setup: ${trade.setup}\n`
+      if (trade.mindset) text += `Mindset: ${trade.mindset}\n`
+      if (trade.followedPlan != null) text += `Followed plan: ${trade.followedPlan ? 'yes' : 'no'}\n`
+      if (trade.mistakes?.length) text += `Mistakes: ${trade.mistakes.join(', ')}\n`
+      if (trade.rating) text += `Execution: ${trade.rating}/5\n`
       if (trade.tags?.length) text += `Tags: ${trade.tags.join(', ')}\n`
       if (trade.chartUrl) text += `Chart: ${trade.chartUrl}\n`
       if (trade.notes) text += `Notes: ${trade.notes}\n`
@@ -168,6 +176,7 @@ export const journalReportHtml = (trades: Trade[], notes: JournalNote[]): string
       <td class="num">${esc(t.quantity)}</td>
       <td class="num ${closed ? pnlClass(t.profitLoss) : ''}">${closed ? esc(formatPnL(t.profitLoss)) : '—'}</td>
       <td class="num">${r === null ? '—' : esc(formatR(r))}</td>
+      <td>${esc(t.setup || '')}</td>
       <td>${esc(t.notes || '')}</td>
     </tr>`
   }).join('')
@@ -177,7 +186,7 @@ export const journalReportHtml = (trades: Trade[], notes: JournalNote[]): string
     <table>
       <thead><tr>
         <th>Date</th><th>Pair</th><th>Side</th><th class="num">Entry</th><th class="num">Exit</th>
-        <th class="num">Qty</th><th class="num">Net P/L</th><th class="num">R</th><th>Notes</th>
+        <th class="num">Qty</th><th class="num">Net P/L</th><th class="num">R</th><th>Setup</th><th>Notes</th>
       </tr></thead>
       <tbody>${tradeRows}</tbody>
     </table>`

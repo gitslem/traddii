@@ -447,6 +447,12 @@ const TradeCard = ({ trade, onEdit, onDelete, onClose }: TradeCardProps) => {
           </span>
         </div>
         <div className="trade-exchange">{EXCHANGES[trade.exchange]?.displayName ?? trade.exchange}</div>
+        {trade.setup && <div className="trade-setup">{trade.setup}</div>}
+        {(trade.mistakes?.length ?? 0) > 0 && (
+          <div className="trade-mistakes" title={trade.mistakes?.join(', ')}>
+            {trade.mistakes?.length} mistake{trade.mistakes?.length === 1 ? '' : 's'}
+          </div>
+        )}
         {!isOpen && (trade.fees || 0) > 0 && <div className="trade-fees">Fees ${trade.fees.toFixed(2)}</div>}
         {trade.chartUrl && /^https?:\/\//.test(trade.chartUrl) && (
           <a className="trade-chart-link" href={trade.chartUrl} target="_blank" rel="noopener noreferrer">

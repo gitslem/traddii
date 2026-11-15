@@ -19,6 +19,7 @@ import TradingJournal from '../components/TradingJournal'
 import TradeModal from '../components/journal/TradeModal'
 import ExportModal from '../components/journal/ExportModal'
 import TradeDetailModal from '../components/journal/TradeDetailModal'
+import EdgeReport from '../components/journal/EdgeReport'
 import PersonalNotes from '../components/PersonalNotes'
 import CryptoRecommendations from '../components/CryptoRecommendations'
 import PageGuide from '../components/PageGuide'
@@ -389,6 +390,8 @@ const JournalHome = () => {
           </div>
         </div>
       </div>
+
+      <EdgeReport trades={shownTrades} />
 
       {/* Crypto Recommendations */}
       <CryptoRecommendations />

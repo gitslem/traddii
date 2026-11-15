@@ -1,8 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Zap, X, TrendingUp, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react'
+import { Zap, X, TrendingUp, TrendingDown, CheckCircle, AlertCircle, Star } from 'lucide-react'
 import PairSelect from '../PairSelect'
 import { EXCHANGES } from '../../config/exchanges'
 import type { AccountType } from '../../config/exchanges'
+import { MAX_SETUP_LENGTH, MINDSETS, MISTAKES, SETUPS } from '../../config/journalTags'
 import type { NewTrade, Trade } from '../../services/firestoreService'
 import {
   computeTradeResult, parseTradeDate, plannedRewardRisk, riskAmount, supportedMarket,
@@ -66,8 +67,15 @@ const TradeModal = ({ trade, intent = 'edit', onClose, onSave }: TradeModalProps
     fees: trade?.feesManual ? String(trade.fees) : '',
     notes: trade?.notes || '',
     tags: trade?.tags?.join(', ') || '',
-    chartUrl: trade?.chartUrl || ''
+    chartUrl: trade?.chartUrl || '',
+    setup: trade?.setup || '',
+    mindset: trade?.mindset || '',
+    followedPlan: (trade?.followedPlan ?? null) as boolean | null,
+    mistakes: trade?.mistakes ?? [] as string[],
+    rating: (trade?.rating ?? null) as number | null
   })
+  // A setup typed by hand (one that is not on the quick list)
+  const [customSetup, setCustomSetup] = useState(trade?.setup && !SETUPS.includes(trade.setup) ? trade.setup : '')
   const [dirty, setDirty] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -184,6 +192,11 @@ const TradeModal = ({ trade, intent = 'edit', onClose, onSave }: TradeModalProps
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
       screenshots: trade?.screenshots || [],
       chartUrl: form.chartUrl.trim(),
+      setup: form.setup.trim(),
+      mindset: form.mindset,
+      followedPlan: form.followedPlan,
+      mistakes: form.mistakes,
+      rating: form.rating,
       // Kept as it was on an edit; a trade typed in here is a manual one
       ...(trade ? {} : { source: 'manual' as const })
     }
@@ -498,6 +511,110 @@ const TradeModal = ({ trade, intent = 'edit', onClose, onSave }: TradeModalProps
                   onChange={(e) => set('chartUrl', e.target.value)}
                   placeholder="https://www.tradingview.com/x/..."
                 />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>Review <span className="tj-optional">optional - powers your edge report</span></h3>
+
+            <div className="form-group">
+              <span className="tj-chip-label" id={`${id}-setup`}>Setup</span>
+              <div className="tj-chips" role="group" aria-labelledby={`${id}-setup`}>
+                {SETUPS.map(setup => (
+                  <button
+                    key={setup}
+                    type="button"
+                    className={`tj-chip ${form.setup === setup ? 'active' : ''}`}
+                    aria-pressed={form.setup === setup}
+                    onClick={() => { set('setup', form.setup === setup ? '' : setup); setCustomSetup('') }}
+                  >
+                    {setup}
+                  </button>
+                ))}
+                <input
+                  type="text"
+                  className={`tj-chip-input ${customSetup ? 'active' : ''}`}
+                  aria-label="Another setup"
+                  placeholder="Other…"
+                  maxLength={MAX_SETUP_LENGTH}
+                  value={customSetup}
+                  onChange={(e) => { setCustomSetup(e.target.value); set('setup', e.target.value) }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <span className="tj-chip-label" id={`${id}-mindset`}>How did you feel going in?</span>
+              <div className="tj-chips" role="group" aria-labelledby={`${id}-mindset`}>
+                {MINDSETS.map(mindset => (
+                  <button
+                    key={mindset}
+                    type="button"
+                    className={`tj-chip ${form.mindset === mindset ? 'active' : ''}`}
+                    aria-pressed={form.mindset === mindset}
+                    onClick={() => set('mindset', form.mindset === mindset ? '' : mindset)}
+                  >
+                    {mindset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <span className="tj-chip-label" id={`${id}-plan`}>Did you follow your plan?</span>
+                <div className="tj-chips" role="group" aria-labelledby={`${id}-plan`}>
+                  {([[true, 'Yes'], [false, 'No']] as const).map(([value, label]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className={`tj-chip ${form.followedPlan === value ? 'active' : ''}`}
+                      aria-pressed={form.followedPlan === value}
+                      onClick={() => set('followedPlan', form.followedPlan === value ? null : value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <span className="tj-chip-label" id={`${id}-rating`}>How well did you execute it?</span>
+                <div className="tj-stars" role="group" aria-labelledby={`${id}-rating`}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`tj-star ${form.rating !== null && star <= form.rating ? 'active' : ''}`}
+                      aria-pressed={form.rating === star}
+                      aria-label={`${star} out of 5`}
+                      onClick={() => set('rating', form.rating === star ? null : star)}
+                    >
+                      <Star size={22} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <span className="tj-chip-label" id={`${id}-mistakes`}>Mistakes</span>
+              <div className="tj-chips" role="group" aria-labelledby={`${id}-mistakes`}>
+                {MISTAKES.map(mistake => {
+                  const on = form.mistakes.includes(mistake)
+                  return (
+                    <button
+                      key={mistake}
+                      type="button"
+                      className={`tj-chip warn ${on ? 'active' : ''}`}
+                      aria-pressed={on}
+                      onClick={() => set('mistakes', on ? form.mistakes.filter(m => m !== mistake) : [...form.mistakes, mistake])}
+                    >
+                      {mistake}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

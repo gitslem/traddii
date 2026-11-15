@@ -67,6 +67,18 @@ export interface Trade {
   importId?: string
   /** Link to a chart of the trade (e.g. a TradingView snapshot) */
   chartUrl?: string
+
+  // Review tags, used by the "Your edge" report
+  /** Why the trade was taken, e.g. "Breakout" */
+  setup?: string
+  /** State of mind going in, e.g. "Calm" or "FOMO" */
+  mindset?: string
+  /** Whether the trade followed the plan; null = not answered */
+  followedPlan?: boolean | null
+  /** Execution mistakes, e.g. "Moved stop" */
+  mistakes?: string[]
+  /** How well the trade was executed, 1 to 5; null = not rated */
+  rating?: number | null
 }
 
 export interface JournalNote {
