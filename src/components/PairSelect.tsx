@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 're
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Search } from 'lucide-react'
-import { POPULAR_PAIRS, OTHER_PAIRS, pairToSymbol, symbolToPair } from '../config/pairs'
+import { POPULAR_PAIRS, OTHER_PAIRS, customPair, pairToSymbol, symbolToPair } from '../config/pairs'
 import './PairSelect.css'
 
 interface PairSelectProps {
@@ -13,10 +13,12 @@ interface PairSelectProps {
   /** Class for the trigger, so each page can style it like its other fields */
   className?: string
   ariaLabel?: string
+  /** Let the user type a pair that is not on the list (used by the Journal) */
+  allowCustom?: boolean
 }
 
 /** Searchable pair picker: type to filter, arrows to move, Enter to pick */
-const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabel = 'Trading pair' }: PairSelectProps) => {
+const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabel = 'Trading pair', allowCustom = false }: PairSelectProps) => {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
@@ -40,7 +42,15 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
     const contains = all.filter(p => !starts.includes(p) && pairToSymbol(p).includes(q))
     return [{ title: '', items: [...starts, ...contains] }]
   }, [query])
-  const flat = useMemo(() => sections.flatMap(s => s.items), [sections])
+  // A typed pair that is not on the list is offered as the last option
+  const typedPair = useMemo(() => {
+    const typed = allowCustom && query.trim() ? customPair(query) : null
+    return typed && !POPULAR_PAIRS.includes(typed) && !OTHER_PAIRS.includes(typed) ? typed : null
+  }, [allowCustom, query])
+  const flat = useMemo(() => {
+    const listed = sections.flatMap(s => s.items)
+    return typedPair ? [...listed, typedPair] : listed
+  }, [sections, typedPair])
 
   const openList = () => {
     setQuery('')
@@ -151,7 +161,7 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
               aria-controls={listId}
               aria-activedescendant={flat[active] ? `${listId}-${active}` : undefined}
               aria-label="Search pairs"
-              placeholder="Search, e.g. LINK"
+              placeholder={allowCustom ? 'Search or type any pair' : 'Search, e.g. LINK'}
               autoComplete="off"
               spellCheck={false}
               value={query}
@@ -181,13 +191,28 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
                         onClick={() => pick(pair)}
                       >
                         <span className="pair-base">{pair.split('/')[0]}</span>
-                        <span className="pair-quote">/USDT</span>
+                        <span className="pair-quote">/{pair.split('/')[1]}</span>
                       </li>
                     )
                   })}
                 </ul>
               </li>
             ))}
+            {typedPair && (
+              <li
+                id={`${listId}-${flat.length - 1}`}
+                data-index={flat.length - 1}
+                role="option"
+                aria-selected={typedPair === current}
+                className={`pair-select-option pair-select-custom${flat.length - 1 === active ? ' active' : ''}`}
+                onMouseMove={() => setActive(flat.length - 1)}
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => pick(typedPair)}
+              >
+                <span className="pair-quote">Use&nbsp;</span>
+                <span className="pair-base">{typedPair}</span>
+              </li>
+            )}
           </ul>
         </div>,
         document.body

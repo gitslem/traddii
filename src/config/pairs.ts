@@ -30,6 +30,18 @@ export const pairToSymbol = (pair: string) => pair.replace('/', '').toUpperCase(
 /** 'BTCUSDT' -> 'BTC/USDT' */
 export const symbolToPair = (symbol: string) => symbol.toUpperCase().replace(/USDT$/, '/USDT')
 
+/**
+ * A pair typed by hand that may not be on the list (the Journal accepts any
+ * pair): 'pepe' -> 'PEPE/USDT', 'pepeusdt' -> 'PEPE/USDT', 'btc/usd' -> 'BTC/USD'
+ */
+export const customPair = (text: string): string | null => {
+  const m = text.trim().toUpperCase().match(/^([A-Z0-9]{2,14})(?:\s*[/\-_ ]\s*([A-Z0-9]{2,6}))?$/)
+  if (!m) return null
+  if (m[2]) return `${m[1]}/${m[2]}`
+  const joined = m[1].match(/^([A-Z0-9]{2,10})(USDT|USDC|USD)$/)
+  return joined ? `${joined[1]}/${joined[2]}` : `${m[1]}/USDT`
+}
+
 export const isSupportedPair = (pair: string) => ALL_PAIRS.includes(pair)
 export const isSupportedSymbol = (symbol: string) => isSupportedPair(symbolToPair(symbol))
 

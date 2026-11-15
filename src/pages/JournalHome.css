@@ -1739,3 +1739,49 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+/* Dashboard and export additions */
+.journal-home .stat-sub {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.journal-home .export-hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.journal-home .export-message {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.journal-home .export-message.ok {
+  background: var(--color-success-alpha-10);
+  color: var(--success-ink);
+}
+
+.journal-home .export-message.error {
+  background: var(--color-danger-alpha-10);
+  color: var(--danger-ink);
+}
+
+.journal-home .detail-chart-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--violet-ink);
+  text-decoration: none;
+}
+
+.journal-home .detail-chart-link:hover {
+  text-decoration: underline;
+}

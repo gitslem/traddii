@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   Download, TrendingUp, TrendingDown, BookOpen,
   Calendar, DollarSign, X, Pin, List, Grid, Plus,
-  FileText, FileJson, FileSpreadsheet, File,
   Target, Activity, Flame, BarChart3,
   ArrowUpRight, ArrowDownRight, Clock, Zap,
   PieChart, Trophy, AlertCircle
@@ -11,402 +10,18 @@ import {
 import { useAuth } from '../context/auth'
 import { firestoreService } from '../services/firestoreService'
 import type { Trade, JournalNote } from '../services/firestoreService'
+import { computeAnalytics } from '../services/journal/analytics'
+import { entryMoment, outcomeOf } from '../services/journal/tradeMath'
+import { formatDuration, formatPnL, formatPrice, formatR, formatUsd } from '../utils/format'
 import TradingJournal from '../components/TradingJournal'
+import TradeModal from '../components/journal/TradeModal'
+import ExportModal from '../components/journal/ExportModal'
+import TradeDetailModal from '../components/journal/TradeDetailModal'
 import PersonalNotes from '../components/PersonalNotes'
 import CryptoRecommendations from '../components/CryptoRecommendations'
 import PageGuide from '../components/PageGuide'
 import TradingBackground from '../components/TradingBackground'
 import './JournalHome.css'
-
-// Export Modal Component
-interface ExportModalProps {
-  trades: Trade[]
-  notes: JournalNote[]
-  onClose: () => void
-}
-
-const ExportModal = ({ trades, notes, onClose }: ExportModalProps) => {
-  const [exportType, setExportType] = useState<'all' | 'trades' | 'notes'>('all')
-  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf' | 'txt'>('json')
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
-  const [showItemSelection, setShowItemSelection] = useState(false)
-
-  const handleExport = () => {
-    try {
-      let dataToExport: string | undefined
-      let filename = `export-${new Date().toISOString().split('T')[0]}`
-
-      if (showItemSelection && selectedItems.size > 0) {
-        const selectedTrades = trades.filter(t => selectedItems.has(t.id))
-        const selectedNotes = notes.filter(n => selectedItems.has(n.id))
-
-        if (exportFormat === 'json') {
-          dataToExport = firestoreService.exportCombinedToJSON(selectedTrades, selectedNotes)
-          filename = `selected-items-${new Date().toISOString().split('T')[0]}.json`
-        } else if (exportFormat === 'csv') {
-          if (selectedTrades.length > 0) {
-            dataToExport = firestoreService.exportToCSV(selectedTrades)
-            filename = `selected-trades-${new Date().toISOString().split('T')[0]}.csv`
-          } else if (selectedNotes.length > 0) {
-            dataToExport = firestoreService.exportNotesToCSV(selectedNotes)
-            filename = `selected-notes-${new Date().toISOString().split('T')[0]}.csv`
-          }
-        } else if (exportFormat === 'txt') {
-          dataToExport = generateTextExport(selectedTrades, selectedNotes)
-          filename = `selected-items-${new Date().toISOString().split('T')[0]}.txt`
-        } else if (exportFormat === 'pdf') {
-          alert('PDF export coming soon! Please use JSON, CSV, or TXT for now.')
-          return
-        }
-      } else {
-        if (exportType === 'all') {
-          if (exportFormat === 'json') {
-            dataToExport = firestoreService.exportCombinedToJSON(trades, notes)
-            filename = `complete-journal-${new Date().toISOString().split('T')[0]}.json`
-          } else if (exportFormat === 'csv') {
-            dataToExport = firestoreService.exportToCSV(trades)
-            filename = `all-trades-${new Date().toISOString().split('T')[0]}.csv`
-          } else if (exportFormat === 'txt') {
-            dataToExport = generateTextExport(trades, notes)
-            filename = `complete-journal-${new Date().toISOString().split('T')[0]}.txt`
-          } else if (exportFormat === 'pdf') {
-            alert('PDF export coming soon! Please use JSON, CSV, or TXT for now.')
-            return
-          }
-        } else if (exportType === 'trades') {
-          if (exportFormat === 'json') {
-            dataToExport = JSON.stringify(trades, null, 2)
-            filename = `trades-${new Date().toISOString().split('T')[0]}.json`
-          } else if (exportFormat === 'csv') {
-            dataToExport = firestoreService.exportToCSV(trades)
-            filename = `trades-${new Date().toISOString().split('T')[0]}.csv`
-          } else if (exportFormat === 'txt') {
-            dataToExport = generateTextExport(trades, [])
-            filename = `trades-${new Date().toISOString().split('T')[0]}.txt`
-          } else if (exportFormat === 'pdf') {
-            alert('PDF export coming soon! Please use JSON, CSV, or TXT for now.')
-            return
-          }
-        } else if (exportType === 'notes') {
-          if (exportFormat === 'json') {
-            dataToExport = JSON.stringify(notes, null, 2)
-            filename = `notes-${new Date().toISOString().split('T')[0]}.json`
-          } else if (exportFormat === 'csv') {
-            dataToExport = firestoreService.exportNotesToCSV(notes)
-            filename = `notes-${new Date().toISOString().split('T')[0]}.csv`
-          } else if (exportFormat === 'txt') {
-            dataToExport = generateTextExport([], notes)
-            filename = `notes-${new Date().toISOString().split('T')[0]}.txt`
-          } else if (exportFormat === 'pdf') {
-            alert('PDF export coming soon! Please use JSON, CSV, or TXT for now.')
-            return
-          }
-        }
-      }
-
-      if (dataToExport) {
-        if (exportFormat === 'txt') {
-          const blob = new Blob([dataToExport], { type: 'text/plain' })
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = url
-          link.download = filename
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          URL.revokeObjectURL(url)
-        } else {
-          firestoreService.downloadExport(dataToExport, filename, exportFormat === 'csv' ? 'csv' : 'json')
-        }
-        alert('Export successful!')
-        onClose()
-      }
-    } catch (error) {
-      console.error('Export error:', error)
-      alert('Failed to export. Please try again.')
-    }
-  }
-
-  const generateTextExport = (trades: Trade[], notes: JournalNote[]): string => {
-    let text = '===== TRADING JOURNAL EXPORT =====\n\n'
-    text += `Exported: ${new Date().toLocaleString()}\n\n`
-
-    if (trades.length > 0) {
-      text += '===== TRADES =====\n\n'
-      trades.forEach((trade, index) => {
-        text += `Trade #${index + 1}\n`
-        text += `Pair: ${trade.pair}\n`
-        text += `Type: ${trade.type.toUpperCase()}\n`
-        text += `Entry: $${trade.entryPrice}\n`
-        text += `Exit: ${trade.exitPrice ? '$' + trade.exitPrice : 'Still Open'}\n`
-        text += `Quantity: ${trade.quantity} (${trade.quantityType})\n`
-        text += `Leverage: ${trade.leverage}x\n`
-        text += `P/L: $${trade.profitLoss.toFixed(2)}\n`
-        text += `Status: ${trade.status}\n`
-        text += `Date: ${new Date(trade.entryDate).toLocaleString()}\n`
-        if (trade.notes) text += `Notes: ${trade.notes}\n`
-        text += '\n---\n\n'
-      })
-    }
-
-    if (notes.length > 0) {
-      text += '===== NOTES =====\n\n'
-      notes.forEach((note, index) => {
-        text += `Note #${index + 1}\n`
-        text += `Title: ${note.title}\n`
-        text += `Category: ${note.category}\n`
-        text += `Content:\n${note.content}\n`
-        text += `Created: ${new Date(note.createdAt).toLocaleString()}\n`
-        if (note.isPinned) text += `[PINNED]\n`
-        text += '\n---\n\n'
-      })
-    }
-
-    return text
-  }
-
-  const toggleItemSelection = (id: string) => {
-    const newSelection = new Set(selectedItems)
-    if (newSelection.has(id)) {
-      newSelection.delete(id)
-    } else {
-      newSelection.add(id)
-    }
-    setSelectedItems(newSelection)
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="export-modal" onClick={e => e.stopPropagation()}>
-        <div className="export-modal-header">
-          <div className="modal-header-content">
-            <Download className="modal-icon" />
-            <h2>Export Journal Data</h2>
-          </div>
-          <button onClick={onClose} className="close-btn">
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="export-modal-body">
-          <div className="export-section">
-            <h3>What to Export</h3>
-            <div className="export-type-buttons">
-              <button
-                className={`export-type-btn ${exportType === 'all' && !showItemSelection ? 'active' : ''}`}
-                onClick={() => { setExportType('all'); setShowItemSelection(false) }}
-              >
-                <BarChart3 size={20} />
-                <span>All Data</span>
-                <small>{trades.length} trades + {notes.length} notes</small>
-              </button>
-              <button
-                className={`export-type-btn ${exportType === 'trades' && !showItemSelection ? 'active' : ''}`}
-                onClick={() => { setExportType('trades'); setShowItemSelection(false) }}
-              >
-                <TrendingUp size={20} />
-                <span>All Trades</span>
-                <small>{trades.length} trades</small>
-              </button>
-              <button
-                className={`export-type-btn ${exportType === 'notes' && !showItemSelection ? 'active' : ''}`}
-                onClick={() => { setExportType('notes'); setShowItemSelection(false) }}
-              >
-                <BookOpen size={20} />
-                <span>All Notes</span>
-                <small>{notes.length} notes</small>
-              </button>
-              <button
-                className={`export-type-btn ${showItemSelection ? 'active' : ''}`}
-                onClick={() => setShowItemSelection(!showItemSelection)}
-              >
-                <Target size={20} />
-                <span>Select Items</span>
-                <small>Custom selection</small>
-              </button>
-            </div>
-          </div>
-
-          {showItemSelection && (
-            <div className="export-section">
-              <h3>Select Items <span className="selection-count">{selectedItems.size} selected</span></h3>
-              <div className="item-selection-list">
-                {trades.length > 0 && (
-                  <div className="item-group">
-                    <h4><TrendingUp size={16} /> Trades</h4>
-                    {trades.map(trade => (
-                      <label key={trade.id} className={`item-checkbox ${selectedItems.has(trade.id) ? 'selected' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(trade.id)}
-                          onChange={() => toggleItemSelection(trade.id)}
-                        />
-                        <span className="checkbox-custom"></span>
-                        <span className="item-info">
-                          <span className="item-title">{trade.pair}</span>
-                          <span className={`item-badge ${trade.type}`}>{trade.type}</span>
-                          <span className={`item-pnl ${trade.profitLoss >= 0 ? 'profit' : 'loss'}`}>
-                            ${Math.abs(trade.profitLoss).toFixed(2)}
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {notes.length > 0 && (
-                  <div className="item-group">
-                    <h4><BookOpen size={16} /> Notes</h4>
-                    {notes.map(note => (
-                      <label key={note.id} className={`item-checkbox ${selectedItems.has(note.id) ? 'selected' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(note.id)}
-                          onChange={() => toggleItemSelection(note.id)}
-                        />
-                        <span className="checkbox-custom"></span>
-                        <span className="item-info">
-                          <span className="item-title">{note.title}</span>
-                          <span className={`item-category ${note.category}`}>{note.category}</span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="export-section">
-            <h3>Export Format</h3>
-            <div className="export-format-buttons">
-              <button
-                className={`format-btn ${exportFormat === 'json' ? 'active' : ''}`}
-                onClick={() => setExportFormat('json')}
-              >
-                <FileJson size={24} />
-                <span>JSON</span>
-              </button>
-              <button
-                className={`format-btn ${exportFormat === 'csv' ? 'active' : ''}`}
-                onClick={() => setExportFormat('csv')}
-              >
-                <FileSpreadsheet size={24} />
-                <span>CSV</span>
-              </button>
-              <button
-                className={`format-btn ${exportFormat === 'txt' ? 'active' : ''}`}
-                onClick={() => setExportFormat('txt')}
-              >
-                <FileText size={24} />
-                <span>Text</span>
-              </button>
-              <button
-                className={`format-btn ${exportFormat === 'pdf' ? 'active' : ''}`}
-                onClick={() => setExportFormat('pdf')}
-                disabled
-                title="Coming soon"
-              >
-                <File size={24} />
-                <span>PDF</span>
-                <small>(Soon)</small>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="export-modal-footer">
-          <button onClick={onClose} className="btn-secondary">Cancel</button>
-          <button
-            onClick={handleExport}
-            className="btn-primary"
-            disabled={showItemSelection && selectedItems.size === 0}
-          >
-            <Download size={18} />
-            <span>Export Now</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Trade Detail Modal
-interface TradeDetailModalProps {
-  trade: Trade
-  onClose: () => void
-}
-
-const TradeDetailModal = ({ trade, onClose }: TradeDetailModalProps) => {
-  const isProfitable = trade.profitLoss > 0
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="detail-modal" onClick={e => e.stopPropagation()}>
-        <div className="detail-modal-header">
-          <div className="modal-header-content">
-            {isProfitable ? <TrendingUp className="modal-icon profit" /> : <TrendingDown className="modal-icon loss" />}
-            <h2>Trade Details</h2>
-          </div>
-          <button onClick={onClose} className="close-btn">
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="detail-modal-body">
-          <div className="detail-section">
-            <div className="detail-pair">
-              <span className="pair-name">{trade.pair}</span>
-              <span className={`trade-type ${trade.type}`}>{trade.type.toUpperCase()}</span>
-              <span className="trade-leverage">{trade.leverage}x</span>
-            </div>
-          </div>
-
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Entry Price</span>
-              <span className="detail-value">${trade.entryPrice}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Exit Price</span>
-              <span className="detail-value">{trade.exitPrice ? `$${trade.exitPrice}` : 'Open'}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Position Size</span>
-              <span className="detail-value">{trade.quantity} {trade.quantityType}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Exchange</span>
-              <span className="detail-value">{trade.exchange}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Status</span>
-              <span className={`status-badge ${trade.status}`}>{trade.status}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Date</span>
-              <span className="detail-value">{new Date(trade.entryDate).toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div className={`pnl-display ${isProfitable ? 'profit' : 'loss'}`}>
-            <span>Profit/Loss</span>
-            <div className="pnl-amount">
-              {isProfitable ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
-              <span>${Math.abs(trade.profitLoss).toFixed(2)}</span>
-            </div>
-          </div>
-
-          {trade.notes && (
-            <div className="detail-notes">
-              <h4>Notes</h4>
-              <p>{trade.notes}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Note Detail Modal
 interface NoteDetailModalProps {
@@ -466,6 +81,7 @@ const JournalHome = () => {
   const [notesView, setNotesView] = useState<'recent' | 'all'>('recent')
   const [tradesPage, setTradesPage] = useState(1)
   const [notesPage, setNotesPage] = useState(1)
+  const [showLogTrade, setShowLogTrade] = useState(false)
   const itemsPerPage = 5
 
   useEffect(() => {
@@ -487,82 +103,7 @@ const JournalHome = () => {
     }
   }, [user, isAuthenticated, loading, navigate])
 
-  // Calculate analytics
-  const analytics = useMemo(() => {
-    const closedTrades = trades.filter(t => t.status === 'closed')
-    const winningTrades = closedTrades.filter(t => t.profitLoss > 0)
-    const losingTrades = closedTrades.filter(t => t.profitLoss < 0)
-
-    const totalPnL = closedTrades.reduce((sum, t) => sum + t.profitLoss, 0)
-    const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length) * 100 : 0
-
-    const avgWin = winningTrades.length > 0
-      ? winningTrades.reduce((sum, t) => sum + t.profitLoss, 0) / winningTrades.length
-      : 0
-    const avgLoss = losingTrades.length > 0
-      ? Math.abs(losingTrades.reduce((sum, t) => sum + t.profitLoss, 0) / losingTrades.length)
-      : 0
-
-    const profitFactor = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? Infinity : 0
-
-    // Calculate streaks
-    let currentStreak = 0
-    let currentStreakType: 'win' | 'loss' | null = null
-    let bestWinStreak = 0
-    let tempWinStreak = 0
-
-    const sortedTrades = [...closedTrades].sort((a, b) =>
-      new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
-    )
-
-    for (const trade of sortedTrades) {
-      const isWin = trade.profitLoss > 0
-
-      if (currentStreakType === null) {
-        currentStreakType = isWin ? 'win' : 'loss'
-        currentStreak = 1
-      } else if ((isWin && currentStreakType === 'win') || (!isWin && currentStreakType === 'loss')) {
-        currentStreak++
-      } else {
-        break
-      }
-
-      if (isWin) {
-        tempWinStreak++
-        bestWinStreak = Math.max(bestWinStreak, tempWinStreak)
-      } else {
-        tempWinStreak = 0
-      }
-    }
-
-    // Trades this week
-    const oneWeekAgo = new Date()
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-    const tradesThisWeek = trades.filter(t => new Date(t.entryDate) >= oneWeekAgo).length
-
-    // Trades this month
-    const oneMonthAgo = new Date()
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-    const tradesThisMonth = trades.filter(t => new Date(t.entryDate) >= oneMonthAgo).length
-
-    return {
-      totalPnL,
-      winRate,
-      avgWin,
-      avgLoss,
-      profitFactor,
-      totalTrades: trades.length,
-      closedTrades: closedTrades.length,
-      openTrades: trades.filter(t => t.status === 'open').length,
-      winningTrades: winningTrades.length,
-      losingTrades: losingTrades.length,
-      currentStreak,
-      currentStreakType,
-      bestWinStreak,
-      tradesThisWeek,
-      tradesThisMonth
-    }
-  }, [trades])
+  const analytics = useMemo(() => computeAnalytics(trades), [trades])
 
   // Get recent activity
   const recentActivity = useMemo(() => {
@@ -571,9 +112,9 @@ const JournalHome = () => {
         id: t.id,
         type: 'trade' as const,
         title: t.pair,
-        subtitle: `${t.type.toUpperCase()} • $${Math.abs(t.profitLoss).toFixed(2)}`,
-        date: new Date(t.entryDate),
-        isProfit: t.profitLoss >= 0,
+        subtitle: `${t.type.toUpperCase()} • ${t.status === 'closed' ? formatPnL(t.profitLoss) : 'Open'}`,
+        date: entryMoment(t),
+        isProfit: outcomeOf(t) !== 'loss',
         data: t
       })),
       ...notes.map(n => ({
@@ -643,6 +184,10 @@ const JournalHome = () => {
         </div>
         <div className="hero-actions">
           <PageGuide page="journal" placement="inline" />
+          <button onClick={() => setShowLogTrade(true)} className="export-btn log-trade-btn">
+            <Plus size={20} />
+            <span>Log Trade</span>
+          </button>
           <button
             onClick={() => setShowExportModal(true)}
             className="export-btn"
@@ -670,7 +215,7 @@ const JournalHome = () => {
         </div>
         <div className={`stat-chip ${analytics.totalPnL >= 0 ? 'profit' : 'loss'}`}>
           {analytics.totalPnL >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-          <span>${Math.abs(analytics.totalPnL).toFixed(2)} Total P/L</span>
+          <span>{formatPnL(analytics.totalPnL)} Net P/L</span>
         </div>
       </div>
 
@@ -687,6 +232,9 @@ const JournalHome = () => {
             <div className="stat-content">
               <span className="stat-value">{analytics.winRate.toFixed(1)}%</span>
               <span className="stat-label">Win Rate</span>
+              <span className="stat-sub">
+                {analytics.wins}W / {analytics.losses}L{analytics.breakevens > 0 ? ` / ${analytics.breakevens} flat` : ''}
+              </span>
             </div>
             <div className="stat-bar">
               <div
@@ -701,10 +249,9 @@ const JournalHome = () => {
               <DollarSign size={24} />
             </div>
             <div className="stat-content">
-              <span className="stat-value">
-                {analytics.totalPnL >= 0 ? '+' : '-'}${Math.abs(analytics.totalPnL).toFixed(2)}
-              </span>
-              <span className="stat-label">Total Profit/Loss</span>
+              <span className="stat-value">{formatPnL(analytics.totalPnL)}</span>
+              <span className="stat-label">Net Profit/Loss</span>
+              <span className="stat-sub">after {formatUsd(analytics.totalFees)} fees</span>
             </div>
             <div className="stat-trend">
               {analytics.totalPnL >= 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
@@ -718,12 +265,15 @@ const JournalHome = () => {
             <div className="stat-content">
               <span className="stat-value">{analytics.profitFactor === Infinity ? '∞' : analytics.profitFactor.toFixed(2)}</span>
               <span className="stat-label">Profit Factor</span>
+              <span className="stat-sub">gross profit ÷ gross loss</span>
             </div>
-            <div className="stat-indicator">
-              <span className={analytics.profitFactor >= 1.5 ? 'good' : analytics.profitFactor >= 1 ? 'neutral' : 'bad'}>
-                {analytics.profitFactor >= 1.5 ? 'Excellent' : analytics.profitFactor >= 1 ? 'Good' : 'Needs Work'}
-              </span>
-            </div>
+            {analytics.closedTrades > 0 && (
+              <div className="stat-indicator">
+                <span className={analytics.profitFactor >= 1.5 ? 'good' : analytics.profitFactor >= 1 ? 'neutral' : 'bad'}>
+                  {analytics.profitFactor >= 1.5 ? 'Strong' : analytics.profitFactor >= 1 ? 'Profitable' : 'Losing'}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="stat-card">
@@ -738,7 +288,7 @@ const JournalHome = () => {
             </div>
             <div className="stat-badge">
               <Trophy size={16} />
-              <span>Best: {analytics.bestWinStreak}</span>
+              <span>Best win run: {analytics.bestWinStreak}</span>
             </div>
           </div>
         </div>
@@ -747,11 +297,31 @@ const JournalHome = () => {
         <div className="secondary-stats">
           <div className="mini-stat">
             <span className="mini-label">Avg Win</span>
-            <span className="mini-value profit">+${analytics.avgWin.toFixed(2)}</span>
+            <span className="mini-value profit">{formatPnL(analytics.avgWin)}</span>
           </div>
           <div className="mini-stat">
             <span className="mini-label">Avg Loss</span>
-            <span className="mini-value loss">-${analytics.avgLoss.toFixed(2)}</span>
+            <span className="mini-value loss">{formatPnL(-analytics.avgLoss)}</span>
+          </div>
+          <div className="mini-stat">
+            <span className="mini-label">Avg per Trade</span>
+            <span className={`mini-value ${analytics.expectancy > 0 ? 'profit' : analytics.expectancy < 0 ? 'loss' : ''}`}>
+              {formatPnL(analytics.expectancy)}
+            </span>
+          </div>
+          <div className="mini-stat" title="Average result in units of the amount risked, for trades with a stop loss">
+            <span className="mini-label">Avg R</span>
+            <span className={`mini-value ${(analytics.avgR ?? 0) > 0 ? 'profit' : (analytics.avgR ?? 0) < 0 ? 'loss' : ''}`}>
+              {analytics.avgR === null ? '—' : formatR(analytics.avgR)}
+            </span>
+          </div>
+          <div className="mini-stat" title="Largest fall from a peak in your cumulative result">
+            <span className="mini-label">Max Drawdown</span>
+            <span className="mini-value">{formatUsd(analytics.maxDrawdown)}</span>
+          </div>
+          <div className="mini-stat">
+            <span className="mini-label">Avg Hold</span>
+            <span className="mini-value">{analytics.avgHoldMs === null ? '—' : formatDuration(analytics.avgHoldMs)}</span>
           </div>
           <div className="mini-stat">
             <span className="mini-label">Open Trades</span>
@@ -886,16 +456,20 @@ const JournalHome = () => {
                       <div className="card-body">
                         <div className="card-info">
                           <DollarSign size={16} />
-                          <span>${trade.entryPrice}</span>
+                          <span>${formatPrice(trade.entryPrice)}</span>
                         </div>
-                        <div className={`card-pnl ${trade.profitLoss >= 0 ? 'profit' : 'loss'}`}>
-                          {trade.profitLoss >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                          <span>${Math.abs(trade.profitLoss).toFixed(2)}</span>
-                        </div>
+                        {trade.status === 'closed' ? (
+                          <div className={`card-pnl ${outcomeOf(trade) === 'loss' ? 'loss' : outcomeOf(trade) === 'win' ? 'profit' : ''}`}>
+                            {outcomeOf(trade) === 'loss' ? <TrendingDown size={16} /> : <TrendingUp size={16} />}
+                            <span>{formatPnL(trade.profitLoss)}</span>
+                          </div>
+                        ) : (
+                          <div className="card-pnl"><Clock size={16} /><span>Open</span></div>
+                        )}
                       </div>
                       <div className="card-footer">
                         <Calendar size={14} />
-                        <span>{new Date(trade.entryDate).toLocaleDateString()}</span>
+                        <span>{entryMoment(trade).toLocaleDateString()}</span>
                         <span className="card-leverage">{trade.leverage}x</span>
                       </div>
                     </div>
@@ -1048,6 +622,17 @@ const JournalHome = () => {
           trades={trades}
           notes={notes}
           onClose={() => setShowExportModal(false)}
+        />
+      )}
+
+      {showLogTrade && user && (
+        <TradeModal
+          trade={null}
+          onClose={() => setShowLogTrade(false)}
+          onSave={async (tradeData) => {
+            await firestoreService.addTrade(user.uid, tradeData)
+            setShowLogTrade(false)
+          }}
         />
       )}
 

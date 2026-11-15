@@ -30,7 +30,7 @@
 
 .pair-select-panel {
   position: fixed; /* placed by PairSelect under its trigger */
-  z-index: 1000;
+  z-index: 1060; /* above modals, so it also works inside a dialog */
   background: var(--surface-solid);
   border: 1px solid rgb(var(--ink) / 0.12);
   border-radius: 14px;
