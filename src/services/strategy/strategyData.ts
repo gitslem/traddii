@@ -1,4 +1,4 @@
-/** Reading saved strategies from stored data. No Firebase imports, so the server runner can use it too. */
+/** Reading saved strategies from stored data. No Firebase imports, so it can be tested in Node. */
 import { DEFAULT_RULES, EMPTY_STATS, TIMEFRAMES } from './types'
 import type { ForwardStats, PairProgress, SavedStrategy, StrategyRules } from './types'
 

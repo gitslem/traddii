@@ -185,8 +185,8 @@ export const PAGE_GUIDES: Record<GuideKey, PageGuideContent> = {
         heading: 'Forward test',
         items: [
           'Sign in and save a strategy to lock its rules. From the next candle on it paper-trades new candles only.',
-          'While any Traddii tab is open it trades each candle as it closes. A scheduled check also runs about every 15 minutes, and whenever you come back it replays any candles it missed, so nothing is lost.',
-          'Turn on alerts to get a notification when a bot signals, opens or closes a trade. With a Traddii tab open they arrive at the candle close; with every tab closed, a scheduled check sends them about every 15 minutes.',
+          'While any Traddii tab is open it trades each candle as it closes, and when you come back after closing it, it replays the candles it missed, so nothing is lost.',
+          'Turn on alerts to get a notification when a bot signals, opens or closes a trade. They come from an open Traddii tab (it can be in the background), at the candle close.',
           'Mirror on Bybit Demo: with your Demo keys connected on the Practice page, each new bot entry is also placed on your Demo account, same size, with its stop and target. This needs a Traddii tab open in that browser; entries made while it is closed are skipped, never placed late.',
           'Closed bot trades go to your Journal as practice trades, with the strategy name as the setup, so "Your edge" can compare strategies.',
           'Changing the rules saves a new version with a fresh forward test. The old version\'s trades keep their version tag.'

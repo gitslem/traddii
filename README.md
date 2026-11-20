@@ -19,7 +19,7 @@
 | **Price Action** | Reads the last closed candle: engulfing, harami, inside bar, doji types, hammer and shooting star (depending on the prior trend), marubozu and spinning top. Compares its volume with the 20-candle average, adds nearby levels and higher-timeframe context, and includes a pre-trade checklist. |
 | **Practice** | Paper trading with $10,000 of virtual money, using live Bybit prices and real Bybit fees. Supports market and limit orders, take-profit and stop-loss, leverage, and liquidation. Bybit **Demo Trading** accounts (real prices, demo funds) or testnet accounts can be connected too. |
 | **Journal** | Log trades and notes, synced to your account with Google sign-in. Results are net of fees, with R-multiples, an equity curve and a daily calendar. Trades can come from the Calculator or be imported from Practice. Tag setups, mindset and mistakes, and the "Your edge" report shows what is working. Personal rules flag trades that break them, an optional AI review coaches the last 7 or 30 days, and everything exports to CSV, JSON, text or a printable PDF. |
-| **Strategies** | Write a strategy as rules (trend on two timeframes, candle patterns, levels, volume; swing or ATR stops; R targets) and backtest it on up to 10,000 Bybit candles with fees and slippage. Run it on one pair or the 8 most traded. Each result shows a likely range for the average R, the cost of fees in R, both halves of the period, and a comparison with random entries. Saved strategies forward-test without a paid server: while a tab is open they trade each candle as it closes, a scheduled GitHub Actions job catches them up every 15 minutes and sends push alerts, and any missed candles are replayed when you return. Their trades go to the Journal as practice trades. Entries can be mirrored on a Bybit Demo account while a tab is open. |
+| **Strategies** | Write a strategy as rules (trend on two timeframes, candle patterns, levels, volume; swing or ATR stops; R targets) and backtest it on up to 10,000 Bybit candles with fees and slippage. Run it on one pair or the 8 most traded. Each result shows a likely range for the average R, the cost of fees in R, both halves of the period, and a comparison with random entries. Saved strategies forward-test without a server: while a tab is open they trade each candle as it closes (with optional browser alerts), and candles missed while Traddii was closed are replayed when you return. Their trades go to the Journal as practice trades. Entries can be mirrored on a Bybit Demo account while a tab is open. |
 
 Every tool page has a **Guide** button explaining how to use it. Day and night themes are included.
 
@@ -36,17 +36,6 @@ The AI Market Brief uses Traddii's free Gemini (Firebase AI Logic) by default. U
 - **Anything else** with an OpenAI-compatible API
 
 Requests go straight from the browser to the chosen provider. Keys are stored only in that browser. If the user's model fails, Traddii falls back to Gemini.
-
-### Strategy runner and push alerts (optional)
-
-Forward tests also run on a schedule ([`.github/workflows/strategy-runner.yml`](./.github/workflows/strategy-runner.yml), every 15 minutes) so alerts arrive with Traddii closed. It needs a Firestore service account key and Web Push keys stored as repository secrets. With `gcloud` signed in as the Firebase project owner and `gh` signed in to the repository, run once:
-
-```bash
-npm install
-scripts/setup-strategy-runner.sh traddii <owner>/<repo>
-```
-
-The script creates a service account that can only read and write Firestore, generates the Web Push keys, and stores `FIREBASE_RUNNER_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VITE_VAPID_PUBLIC_KEY` as secrets without printing them. Redeploy afterwards so the site picks up the public push key. Until it is set up the workflow skips itself. The runner logs counts only, because Actions logs of a public repository are public.
 
 ## Tech stack
 

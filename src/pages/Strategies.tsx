@@ -86,20 +86,15 @@ const Strategies = () => {
   }
 
   const toggleAlerts = async () => {
-    if (!user?.uid) return
     setAlertsNote(null)
     if (alerts) {
+      disableAlerts()
       setAlerts(false)
-      await disableAlerts(user.uid)
       return
     }
-    const result = await enableAlerts(user.uid)
-    setAlerts(result.on)
-    setAlertsNote(!result.on
-      ? 'Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.'
-      : result.push
-        ? null
-        : 'Alerts are on while a Traddii tab is open. Alerts with every tab closed are not available in this browser.')
+    const on = await enableAlerts()
+    setAlerts(on)
+    if (!on) setAlertsNote('Notifications are blocked for this site. Allow them in the browser\'s site settings, then try again.')
   }
 
   const runBacktest = async (override?: StrategyRules) => {

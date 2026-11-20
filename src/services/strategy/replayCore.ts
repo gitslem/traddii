@@ -1,7 +1,6 @@
 /**
- * The part of a forward-test replay that decides what happened, shared by
- * the browser and the scheduled server runner. No Firebase imports: callers
- * write the results with their own database client.
+ * The part of a forward-test replay that decides what happened. No Firebase
+ * imports: forward.ts writes the results, and the engine tests run it in Node.
  */
 import { fetchClosedCandles, intervalMs } from '../ohlcvService'
 import type { NewTrade } from '../firestoreService'

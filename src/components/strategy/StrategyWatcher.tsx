@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/auth'
 import { intervalMs } from '../../services/ohlcvService'
 import { onReplay, replayStrategies } from '../../services/strategy/forward'
-import { alertsOn, notifyReplay } from '../../services/strategy/alerts'
+import { notifyReplay } from '../../services/strategy/alerts'
 import { mirrorReplay } from '../../services/strategy/mirror'
-import { enablePush, pushAvailable } from '../../services/strategy/push'
+import { removeOldPush } from '../../services/strategy/pushCleanup'
 import { subscribeToStrategies } from '../../services/strategy/strategyStore'
 import type { SavedStrategy } from '../../services/strategy/types'
 
@@ -55,9 +55,9 @@ const StrategyWatcher = () => {
     if (uid && s) void mirrorReplay(uid, s, r)
   }), [uid])
 
-  // Push subscriptions can change; refresh this browser's once per visit
+  // Remove what the earlier push-alert setup left in this browser and on the account
   useEffect(() => {
-    if (uid && alertsOn() && pushAvailable()) enablePush(uid).catch(error => console.error('Push refresh failed:', error))
+    if (uid) removeOldPush(uid).catch(error => console.error('Push clean-up failed:', error))
   }, [uid])
 
   // Catch up when the app opens, and when a strategy is added, changed or resumed

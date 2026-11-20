@@ -1,7 +1,6 @@
 /**
- * The words of forward-test alerts, shared by in-tab notifications and the
- * server's push notifications. The same event gets the same tag in both, so
- * a browser shows it once.
+ * The words of forward-test alerts. Each event has a fixed tag, so two open
+ * tabs show it once.
  */
 import { formatPrice } from '../../utils/format'
 import type { OpenSim, SimTrade } from './engine'

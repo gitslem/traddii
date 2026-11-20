@@ -5,8 +5,7 @@
  * New closed trades are counted once and sent to the Journal as practice trades.
  *
  * Replays run when the app opens and at every candle close while any Traddii
- * tab is open (StrategyWatcher), and on a schedule on the server
- * (scripts/strategy-runner.ts), which writes the same results.
+ * tab is open (StrategyWatcher).
  */
 import { firestoreService } from '../firestoreService'
 import { computeReplay } from './replayCore'
