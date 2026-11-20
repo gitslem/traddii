@@ -7,8 +7,10 @@
 const BYBIT = 'https://api.bybit.com/v5/market'
 
 export interface DerivativesSnapshot {
-  /** Funding rate per 8h interval, as a fraction (0.0001 = 0.01%) */
+  /** Funding rate per funding interval, as a fraction (0.0001 = 0.01%) */
   fundingRate: number | null
+  /** Hours between funding payments (8 for most crypto, 4 for gold and silver); null if unknown */
+  fundingIntervalHours: number | null
   /** Open interest value in USD */
   openInterestUsd: number | null
   /** Change in open interest (contracts) over the last 24 hours, as a fraction */
@@ -39,11 +41,13 @@ export const toSymbol = (pair: string) => pair.replace('/', '').toUpperCase()
 
 export const getDerivatives = async (pair: string): Promise<DerivativesSnapshot> => {
   const symbol = toSymbol(pair)
-  const [ticker, oi, ratio] = await Promise.allSettled([
+  const [ticker, oi, ratio, info] = await Promise.allSettled([
     getJson(`${BYBIT}/tickers?category=linear&symbol=${symbol}`),
     getJson(`${BYBIT}/open-interest?category=linear&symbol=${symbol}&intervalTime=1h&limit=25`),
-    getJson(`${BYBIT}/account-ratio?category=linear&symbol=${symbol}&period=1h&limit=1`)
+    getJson(`${BYBIT}/account-ratio?category=linear&symbol=${symbol}&period=1h&limit=1`),
+    getJson(`${BYBIT}/instruments-info?category=linear&symbol=${symbol}`)
   ])
+  const intervalMin = info.status === 'fulfilled' ? num(info.value?.result?.list?.[0]?.fundingInterval) : null
 
   const t = ticker.status === 'fulfilled' ? ticker.value?.result?.list?.[0] : null
 
@@ -62,6 +66,7 @@ export const getDerivatives = async (pair: string): Promise<DerivativesSnapshot>
 
   return {
     fundingRate: num(t?.fundingRate),
+    fundingIntervalHours: intervalMin !== null && intervalMin > 0 ? intervalMin / 60 : null,
     openInterestUsd: num(t?.openInterestValue),
     openInterestChange24h,
     longAccountRatio: num(r?.buyRatio),

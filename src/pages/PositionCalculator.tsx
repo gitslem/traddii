@@ -14,7 +14,7 @@ import {
   BarChart3, Activity, Wallet, Scale, Info, CheckCircle2, XCircle, Send, BookOpen
 } from 'lucide-react'
 import PairSelect from '../components/PairSelect'
-import { isSupportedPair } from '../config/pairs'
+import { isMetal, isSupportedPair, pairName } from '../config/pairs'
 import { useAuth } from '../context/auth'
 import { firestoreService } from '../services/firestoreService'
 import { computeTradeResult, toStoredDate } from '../services/journal/tradeMath'
@@ -583,6 +583,14 @@ const PositionCalculator = () => {
                 Trading Pair
               </label>
               <PairSelect value={cryptoPair} onChange={setCryptoPair} />
+              {isMetal(cryptoPair) && (
+                <p className="metal-note">
+                  {pairName(cryptoPair)} trades in Traddii as a Bybit perpetual (futures).
+                  {(selectedExchange !== 'bybit' || accountType !== 'futures')
+                    ? <> The fees and leverage below are {EXCHANGES[selectedExchange].name}'s. <button type="button" onClick={() => { setSelectedExchange('bybit'); setAccountType('futures') }}>Use Bybit futures</button></>
+                    : ' Bybit may charge a different fee for metals than the crypto fee used here; check its fee page before trading.'}
+                </p>
+              )}
             </div>
 
             {/* Live Price Card */}

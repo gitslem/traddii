@@ -184,7 +184,7 @@ const LandingPage = () => (
     {/* Facts */}
     <section className="ld-facts-band" aria-label="Facts about Traddii">
       <div className="ld-wrap ld-facts">
-        <div><div className="ld-mono ld-fact">36</div><div className="ld-muted">USDT pairs, searchable</div></div>
+        <div><div className="ld-mono ld-fact">38</div><div className="ld-muted">markets: 36 crypto pairs, gold and silver</div></div>
         <div><div className="ld-mono ld-fact">10</div><div className="ld-muted">exchanges' fee and leverage tables</div></div>
         <div><div className="ld-mono ld-fact">0</div><div className="ld-muted">API keys needed to start</div></div>
         <div><div className="ld-mono ld-fact">MIT</div><div className="ld-muted">licence, <a href={GITHUB} target="_blank" rel="noopener noreferrer">code on GitHub</a></div></div>

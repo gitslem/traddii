@@ -1488,3 +1488,23 @@
   color: var(--gold-ink);
   font-weight: 700;
 }
+
+/* Note shown for gold and silver */
+.metal-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgb(var(--ink) / 0.7);
+}
+
+.metal-note button {
+  margin-left: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--gold-ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

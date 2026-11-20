@@ -1,6 +1,7 @@
 import { getMarketStructure } from '../ohlcvService'
 import type { MarketStructureData, StructureTrend } from '../ohlcvService'
 import { formatPrice } from '../../utils/format'
+import { isMetal, pairName } from '../../config/pairs'
 import { getDerivatives, getSentiment } from './marketData'
 import type { DerivativesSnapshot, SentimentSnapshot } from './marketData'
 import { generate } from './aiService'
@@ -23,6 +24,7 @@ export interface MarketFacts {
   support: { price: number; touches: number }[]
   resistance: { price: number; touches: number }[]
   derivatives: DerivativesSnapshot
+  /** Crypto Fear & Greed; null for gold and silver, which it does not describe */
   sentiment: SentimentSnapshot | null
 }
 
@@ -51,7 +53,7 @@ export const gatherFacts = async (pair: string): Promise<MarketFacts> => {
   const [structures, derivatives, sentiment] = await Promise.all([
     Promise.all(BRIEF_TIMEFRAMES.map(tf => getMarketStructure(pair, tf).catch(() => null))),
     getDerivatives(pair).catch(() => null),
-    getSentiment()
+    isMetal(pair) ? Promise.resolve(null) : getSentiment()
   ])
 
   const byTf: Record<string, MarketStructureData | null> = {}
@@ -74,7 +76,7 @@ export const gatherFacts = async (pair: string): Promise<MarketFacts> => {
     support: levelSource.support.slice(0, 3).map(l => ({ price: l.price, touches: l.touches })),
     resistance: levelSource.resistance.slice(0, 3).map(l => ({ price: l.price, touches: l.touches })),
     derivatives: derivatives ?? {
-      fundingRate: null, openInterestUsd: null, openInterestChange24h: null, longAccountRatio: null, priceChange24h: null
+      fundingRate: null, fundingIntervalHours: null, openInterestUsd: null, openInterestChange24h: null, longAccountRatio: null, priceChange24h: null
     },
     sentiment
   }
@@ -86,7 +88,7 @@ const usd = (v: number) => `$${formatPrice(v)}`
 /** Plain-text fact sheet given to the model */
 export const factsToText = (f: MarketFacts): string => {
   const lines: string[] = []
-  lines.push(`Pair: ${f.pair}`)
+  lines.push(`Pair: ${f.pair}${pairName(f.pair) ? ` (${pairName(f.pair)}, a Bybit perpetual that follows the metal's price)` : ''}`)
   lines.push(`Current price: ${usd(f.price)}`)
   lines.push(`24h price change: ${pct(f.derivatives.priceChange24h)}`)
   lines.push('')
@@ -102,15 +104,18 @@ export const factsToText = (f: MarketFacts): string => {
   lines.push(`Resistance levels (${LEVEL_TIMEFRAME}): ${f.resistance.length ? f.resistance.map(l => `${usd(l.price)} (${l.touches} touches)`).join(', ') : 'none found'}`)
   lines.push('')
   lines.push('Perpetual futures (Bybit):')
-  lines.push(`- Funding rate per 8h: ${pct(f.derivatives.fundingRate, 4)}`)
+  const hours = f.derivatives.fundingIntervalHours
+  lines.push(`- Funding rate per ${hours ? `${hours}h` : 'funding interval'}: ${pct(f.derivatives.fundingRate, 4)}`)
   lines.push(`- Open interest change, 24h: ${pct(f.derivatives.openInterestChange24h)}`)
   lines.push(`- Accounts net long: ${pct(f.derivatives.longAccountRatio, 1)}`)
-  lines.push('')
-  lines.push(`Crypto Fear & Greed Index: ${f.sentiment ? `${f.sentiment.value} (${f.sentiment.label})` : 'n/a'}`)
+  if (!isMetal(f.pair)) {
+    lines.push('')
+    lines.push(`Crypto Fear & Greed Index: ${f.sentiment ? `${f.sentiment.value} (${f.sentiment.label})` : 'n/a'}`)
+  }
   return lines.join('\n')
 }
 
-const SYSTEM_PROMPT = `You are a careful crypto market analyst writing a short brief for a retail trader.
+const SYSTEM_PROMPT = `You are a careful market analyst writing a short brief for a retail trader about a crypto or metals (gold, silver) perpetual future.
 
 Rules:
 - Use ONLY the facts provided. Do not invent prices, news, events or indicators that are not in the facts.
@@ -121,9 +126,9 @@ Rules:
 
 How to read the facts:
 - Higher timeframes (4h, 1d) outweigh lower ones (15m, 1h).
-- Positive funding = longs pay shorts; very high funding (above 0.03% per 8h) with most accounts long means crowded longs that can be squeezed. Negative funding is the mirror image.
+- Positive funding = longs pay shorts; very high funding (above 0.03% per 8h, or 0.015% per 4h) with most accounts long means crowded longs that can be squeezed. Negative funding is the mirror image.
 - Rising open interest with rising price = new money behind the move; rising open interest against the trend = traders fighting it; falling open interest = positions closing.
-- Extreme fear or extreme greed is a contrarian warning, not a signal by itself.
+- Extreme fear or extreme greed is a contrarian warning, not a signal by itself. The Fear & Greed index covers crypto only; it is left out for metals.
 
 Reply with a JSON object exactly in this shape:
 {

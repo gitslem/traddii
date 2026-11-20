@@ -1,5 +1,6 @@
 /**
  * Trading pairs offered across Traddii (Calculator, Market, Price, Practice).
+ * Crypto pairs, plus gold and silver.
  *
  * To add a pair, add its base coin to POPULAR_BASES or OTHER_BASES. It must
  * trade as <BASE>USDT on Bybit USDT perpetuals, which supply the candles
@@ -17,12 +18,26 @@ const OTHER_BASES = [
   'TIA', 'TRX', 'UNI', 'WIF', 'WLD', 'XLM'
 ]
 
+// Metals: Bybit USDT perpetuals that follow the price of gold and silver
+// (contract type "commodity"; funding every 4 hours instead of 8)
+const METAL_BASES = ['XAU', 'XAG']
+
 const toPair = (base: string) => `${base}/USDT`
 
 /** Display pairs, e.g. 'BTC/USDT' */
 export const POPULAR_PAIRS = POPULAR_BASES.map(toPair)
 export const OTHER_PAIRS = [...OTHER_BASES].sort().map(toPair)
-export const ALL_PAIRS = [...POPULAR_PAIRS, ...OTHER_PAIRS]
+export const CRYPTO_PAIRS = [...POPULAR_PAIRS, ...OTHER_PAIRS]
+export const METAL_PAIRS = METAL_BASES.map(toPair)
+export const ALL_PAIRS = [...CRYPTO_PAIRS, ...METAL_PAIRS]
+
+const NAMES: Record<string, string> = { 'XAU/USDT': 'Gold', 'XAG/USDT': 'Silver' }
+
+/** Gold or silver rather than a cryptocurrency */
+export const isMetal = (pair: string) => METAL_PAIRS.includes(pair)
+
+/** Plain name for pairs whose ticker is not obvious, e.g. 'XAU/USDT' -> 'Gold'; null otherwise */
+export const pairName = (pair: string): string | null => NAMES[pair] ?? null
 
 /** 'BTC/USDT' -> 'BTCUSDT' */
 export const pairToSymbol = (pair: string) => pair.replace('/', '').toUpperCase()

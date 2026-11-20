@@ -16,6 +16,7 @@ export const PAGE_GUIDES: Record<GuideKey, PageGuideContent> = {
         heading: 'How to use it',
         items: [
           'Pick your exchange and account type (Spot, Futures or Margin). Fees and maximum leverage follow your choice.',
+          'Gold (XAU/USDT) and silver (XAG/USDT) are listed under Metals. They trade as Bybit futures, so pick Bybit Futures for the right fees and leverage.',
           'Enter your account balance and the % you are willing to risk on this trade. 1% or less is a common guideline.',
           'Enter the entry, stop loss and take profit prices, or press "Use as Entry Price" on the live price card.',
           'Optional: turn on leverage, and add a second and third take profit under "Multiple Take Profits".'

@@ -113,3 +113,16 @@
   color: var(--text-faint);
   font-size: 0.875rem;
 }
+
+/* Plain name for gold and silver */
+.pair-select-option .pair-name {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pair-select-trigger .pair-name {
+  font-weight: 500;
+  color: var(--text-muted);
+}

@@ -25,7 +25,9 @@ Every tool page has a **Guide** button explaining how to use it. Day and night t
 
 ### Trading pairs
 
-36 USDT pairs are available on every page, with a searchable picker. They are listed in [`src/config/pairs.ts`](./src/config/pairs.ts). To add one, add its coin to that file. It must trade as `<COIN>USDT` on Bybit USDT perpetuals, which supply the candles, Practice and the AI brief.
+36 crypto pairs plus gold (XAU/USDT) and silver (XAG/USDT) are available on every page, with a searchable picker. They are listed in [`src/config/pairs.ts`](./src/config/pairs.ts). To add one, add its coin to that file. It must trade as `<COIN>USDT` on Bybit USDT perpetuals, which supply the candles, Practice and the AI brief.
+
+Gold and silver are Bybit perpetuals that follow the metals' prices. Only Bybit lists them among the Calculator's exchanges, their funding is paid every 4 hours, and the crypto Fear & Greed index is left out of their AI brief. They trade every day, but weekends are much quieter (about a fifth of weekday turnover), which affects candle patterns and backtests. Bybit's fee for them may differ from the crypto fee Traddii assumes.
 
 ### Bring your own AI model
 

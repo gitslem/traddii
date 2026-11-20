@@ -1,4 +1,4 @@
-import { ALL_PAIRS, pairToSymbol } from '../config/pairs'
+import { CRYPTO_PAIRS, pairToSymbol } from '../config/pairs'
 
 export interface CryptoRecommendation {
   symbol: string
@@ -41,8 +41,8 @@ const MARKET_NARRATIVES: { coins: string[]; narrative: string }[] = [
   }
 ]
 
-// Every pair Traddii lists, so each suggestion can be analysed and practised
-const TRADING_PAIRS = ALL_PAIRS.map(pairToSymbol)
+// Every crypto pair Traddii lists, so each suggestion can be analysed and practised
+const TRADING_PAIRS = CRYPTO_PAIRS.map(pairToSymbol)
 
 // Bybit USDT perpetual ticker (all values are strings)
 interface BybitTicker {

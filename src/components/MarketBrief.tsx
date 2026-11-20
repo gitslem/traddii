@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Sparkles, RefreshCw, TrendingUp, TrendingDown, Eye, ShieldAlert, Loader2 } from 'lucide-react'
 import { gatherFacts, generateMarketBrief, getCachedBrief, BRIEF_CACHE_MS } from '../services/ai/marketBrief'
 import type { MarketBrief as Brief, MarketFacts } from '../services/ai/marketBrief'
+import { isMetal } from '../config/pairs'
 import { formatPrice } from '../utils/format'
 import AISettings from './AISettings'
 import './MarketBrief.css'
@@ -61,6 +62,7 @@ const MarketBrief = ({ pair }: { pair: string }) => {
   }
 
   const d = facts?.derivatives
+  const metal = isMetal(pair)
   const ageMin = brief ? Math.floor((Date.now() - brief.facts.generatedAt) / 60_000) : 0
   const canRefresh = !brief || Date.now() - brief.facts.generatedAt > BRIEF_CACHE_MS / 5
 
@@ -90,7 +92,7 @@ const MarketBrief = ({ pair }: { pair: string }) => {
       {/* Positioning facts - plain data, no AI */}
       <div className="mb-facts">
         <div className={`mb-fact ${fundingTone(d?.fundingRate ?? null)}`}>
-          <span className="mb-fact-label">Funding (8h)</span>
+          <span className="mb-fact-label">Funding{d?.fundingIntervalHours ? ` (${d.fundingIntervalHours}h)` : ''}</span>
           <span className="mb-fact-value">{d ? pct(d.fundingRate, 4) : '…'}</span>
           <span className="mb-fact-hint">
             {d?.fundingRate == null ? 'Bybit perpetual' : d.fundingRate >= 0 ? 'Longs pay shorts' : 'Shorts pay longs'}
@@ -113,7 +115,7 @@ const MarketBrief = ({ pair }: { pair: string }) => {
         <div className={`mb-fact ${sentimentTone(facts?.sentiment?.value)}`}>
           <span className="mb-fact-label">Fear & Greed</span>
           <span className="mb-fact-value">{facts ? facts.sentiment?.value ?? '—' : '…'}</span>
-          <span className="mb-fact-hint">{facts?.sentiment?.label || 'Whole crypto market'}</span>
+          <span className="mb-fact-hint">{metal ? 'Crypto only, not shown for metals' : facts?.sentiment?.label || 'Whole crypto market'}</span>
         </div>
       </div>
       {factsError && !facts && <p className="mb-muted">Could not load market data. Retrying every minute.</p>}

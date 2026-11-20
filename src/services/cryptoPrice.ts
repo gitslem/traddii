@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { isSupportedPair, pairToSymbol } from '../config/pairs'
+import { isMetal, isSupportedPair, pairName, pairToSymbol } from '../config/pairs'
 
 export interface CryptoPrice {
   symbol: string
@@ -222,6 +222,17 @@ export const getCryptoPrice = async (pair: string, exchange: string = 'binance')
   }
 
   const id = exchange.toLowerCase()
+  // Gold and silver are Bybit perpetuals; the other exchanges here do not list them
+  if (isMetal(pair)) {
+    try {
+      const price = await fetchBybitPrice(symbol, pair)
+      if (!price) return null
+      return id === 'bybit' ? price : { ...price, note: `${pairName(pair)} is priced from Bybit, the only exchange in Traddii that lists it` }
+    } catch (error) {
+      console.error(`Error fetching ${pair} price from Bybit:`, error)
+      return null
+    }
+  }
   const chosen = FETCHERS[id] ? id : NO_BROWSER_ACCESS[id] ? null : 'binance'
   const sources = [...new Set([chosen, 'binance', 'bybit'].filter((s): s is string => !!s))]
   const name = NO_BROWSER_ACCESS[id] ?? EXCHANGE_NAMES[id] ?? (id === 'binance' ? 'Binance' : exchange)

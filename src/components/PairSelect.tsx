@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 're
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, Search } from 'lucide-react'
-import { POPULAR_PAIRS, OTHER_PAIRS, customPair, pairToSymbol, symbolToPair } from '../config/pairs'
+import { ALL_PAIRS, METAL_PAIRS, POPULAR_PAIRS, OTHER_PAIRS, customPair, pairName, pairToSymbol, symbolToPair } from '../config/pairs'
 import './PairSelect.css'
 
 interface PairSelectProps {
@@ -33,19 +33,21 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
   const current = format === 'symbol' ? symbolToPair(value) : value
   const label = (pair: string) => (format === 'symbol' ? pairToSymbol(pair) : pair)
 
-  // Popular first, then A-Z; while searching, matches that start with the query come first
+  // Popular first, then metals, then A-Z; while searching, matches that start with the query
+  // come first, and gold and silver can be found by name
   const sections = useMemo(() => {
     const q = query.trim().toUpperCase().replace(/[\s/]/g, '')
-    if (!q) return [{ title: 'Popular', items: POPULAR_PAIRS }, { title: 'All pairs A-Z', items: OTHER_PAIRS }]
-    const all = [...POPULAR_PAIRS, ...OTHER_PAIRS]
-    const starts = all.filter(p => pairToSymbol(p).startsWith(q))
-    const contains = all.filter(p => !starts.includes(p) && pairToSymbol(p).includes(q))
+    if (!q) return [{ title: 'Popular', items: POPULAR_PAIRS }, { title: 'Metals', items: METAL_PAIRS }, { title: 'All pairs A-Z', items: OTHER_PAIRS }]
+    const all = [...POPULAR_PAIRS, ...METAL_PAIRS, ...OTHER_PAIRS]
+    const keys = (p: string) => [pairToSymbol(p), (pairName(p) ?? '').toUpperCase()]
+    const starts = all.filter(p => keys(p).some(k => k.startsWith(q)))
+    const contains = all.filter(p => !starts.includes(p) && keys(p).some(k => k.includes(q)))
     return [{ title: '', items: [...starts, ...contains] }]
   }, [query])
   // A typed pair that is not on the list is offered as the last option
   const typedPair = useMemo(() => {
     const typed = allowCustom && query.trim() ? customPair(query) : null
-    return typed && !POPULAR_PAIRS.includes(typed) && !OTHER_PAIRS.includes(typed) ? typed : null
+    return typed && !ALL_PAIRS.includes(typed) ? typed : null
   }, [allowCustom, query])
   const flat = useMemo(() => {
     const listed = sections.flatMap(s => s.items)
@@ -54,7 +56,7 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
 
   const openList = () => {
     setQuery('')
-    setActive(Math.max(0, [...POPULAR_PAIRS, ...OTHER_PAIRS].indexOf(current)))
+    setActive(Math.max(0, [...POPULAR_PAIRS, ...METAL_PAIRS, ...OTHER_PAIRS].indexOf(current)))
     setOpen(true)
   }
 
@@ -145,7 +147,7 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
           if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); openList() }
         }}
       >
-        <span>{label(current)}</span>
+        <span>{label(current)}{pairName(current) && <span className="pair-name"> · {pairName(current)}</span>}</span>
         <ChevronDown size={16} aria-hidden="true" />
       </button>
 
@@ -161,7 +163,7 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
               aria-controls={listId}
               aria-activedescendant={flat[active] ? `${listId}-${active}` : undefined}
               aria-label="Search pairs"
-              placeholder={allowCustom ? 'Search or type any pair' : 'Search, e.g. LINK'}
+              placeholder={allowCustom ? 'Search or type any pair' : 'Search, e.g. LINK or gold'}
               autoComplete="off"
               spellCheck={false}
               value={query}
@@ -192,6 +194,7 @@ const PairSelect = ({ value, onChange, format = 'pair', className = '', ariaLabe
                       >
                         <span className="pair-base">{pair.split('/')[0]}</span>
                         <span className="pair-quote">/{pair.split('/')[1]}</span>
+                        {pairName(pair) && <span className="pair-name">{pairName(pair)}</span>}
                       </li>
                     )
                   })}
