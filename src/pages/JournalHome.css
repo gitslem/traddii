@@ -5,7 +5,8 @@
   background: var(--color-background);
   padding: 2rem;
   position: relative;
-  overflow-x: hidden;
+  /* clip, not hidden: hidden would stop the section bar from sticking */
+  overflow-x: clip;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -1859,4 +1860,177 @@
   margin-right: 0.25rem;
   font-size: 0.8rem;
   color: var(--color-text-tertiary);
+}
+
+/* ---------- Section bar and numbered sections ---------- */
+.jn-bar {
+  position: sticky;
+  z-index: 900; /* under the site menu (1000) and its dropdown */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 2rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  background: var(--glass-background, var(--color-surface));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.jn-links {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.jn-links::-webkit-scrollbar {
+  display: none;
+}
+
+.jn-links a {
+  flex-shrink: 0;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+@media (hover: hover) {
+  .jn-links a:hover {
+    color: var(--color-text-primary);
+    background: rgba(139, 92, 246, 0.08);
+  }
+}
+
+.jn-links a.active {
+  color: var(--violet-ink);
+  background: rgba(139, 92, 246, 0.14);
+}
+
+.jn-links a:focus-visible,
+.jn-log:focus-visible {
+  outline: 2px solid var(--violet-ink);
+  outline-offset: 2px;
+}
+
+.jn-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.jn-bar-actions .ji-account-switch {
+  margin: 0;
+}
+
+.jn-log {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 40px;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--violet-gradient);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.jn-chapter {
+  margin-bottom: 3.5rem;
+  /* Stop below the site menu and the section bar when jumped to */
+  scroll-margin-top: var(--jn-offset, 150px);
+}
+
+.jn-chapter:focus {
+  outline: none;
+}
+
+.jn-chapter-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.875rem;
+  margin: 0 0 1.25rem;
+  padding: 0 0.25rem;
+}
+
+.jn-num {
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--violet-ink);
+}
+
+.jn-chapter-head h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.jn-chapter-head p {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+}
+
+/* With the full width, trade and note cards sit side by side */
+.jn-chapter .cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+/* Cards inside a section are spaced evenly, whichever component draws them */
+.jn-chapter > :not(.jn-chapter-head) {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.jn-chapter > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .jn-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .jn-links {
+    flex-basis: 100%;
+  }
+
+  .jn-links a {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .jn-bar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .jn-chapter {
+    margin-bottom: 2.5rem;
+  }
+
+  .jn-chapter-head h2 {
+    font-size: 1.35rem;
+  }
 }

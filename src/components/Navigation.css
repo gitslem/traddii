@@ -177,6 +177,37 @@
 }
 
 /* Responsive Design */
+/* Seven links plus the account controls: tighten up before the labels disappear at 1200px */
+@media (max-width: 1440px) {
+  .nav-container {
+    padding: 0 24px;
+    gap: 12px;
+  }
+
+  .nav-links {
+    gap: 2px;
+  }
+
+  .nav-link {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  /* Show just the avatar; the name stays in the tooltip and the image's alt text */
+  .user-info {
+    padding: 8px 10px;
+  }
+
+  .user-info span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 1200px) {
   .nav-links {
     gap: 4px;

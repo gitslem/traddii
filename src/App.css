@@ -20,14 +20,17 @@ body {
   color: var(--color-text-primary);
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  /* clip rather than hidden: hidden makes these elements scroll containers,
+     which stops sticky parts (the site menu, the Journal's section bar) from sticking.
+     html keeps hidden so browsers without clip still cannot scroll sideways. */
+  overflow-x: clip;
   position: relative;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .app {
@@ -35,7 +38,7 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .main-content {

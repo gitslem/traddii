@@ -64,7 +64,7 @@ const Navigation = () => {
         <div className="nav-auth">
           {isAuthenticated ? (
             <>
-              <div className="user-info">
+              <div className="user-info" title={user?.displayName || user?.email || undefined}>
                 {user?.photoURL ? (
                   <img
                     src={user.photoURL}

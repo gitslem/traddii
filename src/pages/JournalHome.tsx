@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Download, TrendingUp, TrendingDown, BookOpen,
   Calendar, DollarSign, X, Pin, List, Grid, Plus,
-  Target, Activity, Flame, BarChart3,
+  Target, Flame,
   ArrowUpRight, ArrowDownRight, Clock, Zap,
   PieChart, Trophy, AlertCircle, Upload
 } from 'lucide-react'
@@ -31,6 +31,8 @@ import { onReplay } from '../services/strategy/forward'
 import PersonalNotes from '../components/PersonalNotes'
 import CryptoRecommendations from '../components/CryptoRecommendations'
 import PageGuide from '../components/PageGuide'
+import JournalNav from '../components/journal/JournalNav'
+import type { JournalSection } from '../components/journal/JournalNav'
 import TradingBackground from '../components/TradingBackground'
 import './JournalHome.css'
 
@@ -79,6 +81,28 @@ const NoteDetailModal = ({ note, onClose }: NoteDetailModalProps) => {
   )
 }
 
+const JOURNAL_SECTIONS: JournalSection[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'trades', label: 'Trades' },
+  { id: 'review', label: 'Review' },
+  { id: 'notes', label: 'Notes' },
+  { id: 'ideas', label: 'Market ideas' }
+]
+
+/** A numbered part of the Journal; the section bar jumps to it */
+const Chapter = ({ id, n, title, text, children }: { id: string; n: string; title: string; text: string; children: React.ReactNode }) => (
+  <section id={id} className="jn-chapter" tabIndex={-1} aria-labelledby={`${id}-title`}>
+    <header className="jn-chapter-head">
+      <span className="jn-num" aria-hidden="true">{n}</span>
+      <div>
+        <h2 id={`${id}-title`}>{title}</h2>
+        <p>{text}</p>
+      </div>
+    </header>
+    {children}
+  </section>
+)
+
 // Main Component
 const JournalHome = () => {
   const { user, isAuthenticated, loading } = useAuth()
@@ -97,7 +121,7 @@ const JournalHome = () => {
   const [accountChoice, setAccountChoice] = useState<AccountMode | null>(null)
   const [importing, setImporting] = useState(false)
   const [importMessage, setImportMessage] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
-  const itemsPerPage = 5
+  const itemsPerPage = 6
 
   // Practice trades are kept apart from real ones. Until the user chooses,
   // show real trades, or practice when that is all there is.
@@ -263,32 +287,11 @@ const JournalHome = () => {
         </div>
       </div>
 
-      {/* Quick Stats Bar */}
-      <div className="quick-stats-bar">
-        <div className="stat-chip">
-          <Activity size={18} />
-          <span>{analytics.totalTrades} Trades</span>
-        </div>
-        <div className="stat-chip">
-          <BookOpen size={18} />
-          <span>{notes.length} Notes</span>
-        </div>
-        <div className="stat-chip">
-          <Clock size={18} />
-          <span>{analytics.tradesThisWeek} This Week</span>
-        </div>
-        <div className={`stat-chip ${analytics.totalPnL >= 0 ? 'profit' : 'loss'}`}>
-          {analytics.totalPnL >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-          <span>{formatPnL(analytics.totalPnL)} Net P/L</span>
-        </div>
-      </div>
-
-      {/* Performance Dashboard */}
-      <div className="performance-dashboard">
-        <div className="dashboard-header">
-          <h2><BarChart3 size={24} /> Performance Overview</h2>
-          {hasPractice && (
-            <div className="ji-account-switch" role="group" aria-label="Which trades to show">
+      <JournalNav
+        sections={JOURNAL_SECTIONS}
+        onLogTrade={() => setShowLogTrade(true)}
+        accountSwitch={hasPractice ? (
+          <div className="ji-account-switch" role="group" aria-label="Which trades to show">
               {([['real', 'Real'], ['practice', 'Practice'], ['all', 'All']] as const).map(([mode, label]) => (
                 <button
                   key={mode}
@@ -300,192 +303,187 @@ const JournalHome = () => {
                 </button>
               ))}
             </div>
-          )}
-        </div>
-        <div className="stats-grid">
-          <div className="stat-card primary">
-            <div className="stat-icon">
-              <Target size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-value">{analytics.winRate.toFixed(1)}%</span>
-              <span className="stat-label">Win Rate</span>
-              <span className="stat-sub">
-                {analytics.wins}W / {analytics.losses}L{analytics.breakevens > 0 ? ` / ${analytics.breakevens} flat` : ''}
-              </span>
-            </div>
-            <div className="stat-bar">
-              <div
-                className="stat-bar-fill win"
-                style={{ width: `${analytics.winRate}%` }}
-              ></div>
-            </div>
-          </div>
+        ) : null}
+      />
 
-          <div className={`stat-card ${analytics.totalPnL >= 0 ? 'profit' : 'loss'}`}>
-            <div className="stat-icon">
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-value">{formatPnL(analytics.totalPnL)}</span>
-              <span className="stat-label">Net Profit/Loss</span>
-              <span className="stat-sub">after {formatUsd(analytics.totalFees)} fees</span>
-            </div>
-            <div className="stat-trend">
-              {analytics.totalPnL >= 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon">
-              <PieChart size={24} />
-            </div>
-            <div className="stat-content">
-              <span className="stat-value">{analytics.profitFactor === Infinity ? '∞' : analytics.profitFactor.toFixed(2)}</span>
-              <span className="stat-label">Profit Factor</span>
-              <span className="stat-sub">gross profit ÷ gross loss</span>
-            </div>
-            {analytics.closedTrades > 0 && (
-              <div className="stat-indicator">
-                <span className={analytics.profitFactor >= 1.5 ? 'good' : analytics.profitFactor >= 1 ? 'neutral' : 'bad'}>
-                  {analytics.profitFactor >= 1.5 ? 'Strong' : analytics.profitFactor >= 1 ? 'Profitable' : 'Losing'}
+      <Chapter id="overview" n="01" title="Overview" text="Your results at a glance, after fees.">
+        <div className="performance-dashboard">
+          <div className="stats-grid">
+            <div className="stat-card primary">
+              <div className="stat-icon">
+                <Target size={24} />
+              </div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.winRate.toFixed(1)}%</span>
+                <span className="stat-label">Win Rate</span>
+                <span className="stat-sub">
+                  {analytics.wins}W / {analytics.losses}L{analytics.breakevens > 0 ? ` / ${analytics.breakevens} flat` : ''}
                 </span>
               </div>
-            )}
+              <div className="stat-bar">
+                <div
+                  className="stat-bar-fill win"
+                  style={{ width: `${analytics.winRate}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className={`stat-card ${analytics.totalPnL >= 0 ? 'profit' : 'loss'}`}>
+              <div className="stat-icon">
+                <DollarSign size={24} />
+              </div>
+              <div className="stat-content">
+                <span className="stat-value">{formatPnL(analytics.totalPnL)}</span>
+                <span className="stat-label">Net Profit/Loss</span>
+                <span className="stat-sub">after {formatUsd(analytics.totalFees)} fees</span>
+              </div>
+              <div className="stat-trend">
+                {analytics.totalPnL >= 0 ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">
+                <PieChart size={24} />
+              </div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.profitFactor === Infinity ? '∞' : analytics.profitFactor.toFixed(2)}</span>
+                <span className="stat-label">Profit Factor</span>
+                <span className="stat-sub">gross profit ÷ gross loss</span>
+              </div>
+              {analytics.closedTrades > 0 && (
+                <div className="stat-indicator">
+                  <span className={analytics.profitFactor >= 1.5 ? 'good' : analytics.profitFactor >= 1 ? 'neutral' : 'bad'}>
+                    {analytics.profitFactor >= 1.5 ? 'Strong' : analytics.profitFactor >= 1 ? 'Profitable' : 'Losing'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-icon">
+                <Flame size={24} />
+              </div>
+              <div className="stat-content">
+                <span className="stat-value">{analytics.currentStreak}</span>
+                <span className="stat-label">
+                  Current {analytics.currentStreakType === 'win' ? 'Win' : analytics.currentStreakType === 'loss' ? 'Loss' : ''} Streak
+                </span>
+              </div>
+              <div className="stat-badge">
+                <Trophy size={16} />
+                <span>Best win run: {analytics.bestWinStreak}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon">
-              <Flame size={24} />
+          {/* Secondary Stats */}
+          <div className="secondary-stats">
+            <div className="mini-stat">
+              <span className="mini-label">Avg Win</span>
+              <span className="mini-value profit">{formatPnL(analytics.avgWin)}</span>
             </div>
-            <div className="stat-content">
-              <span className="stat-value">{analytics.currentStreak}</span>
-              <span className="stat-label">
-                Current {analytics.currentStreakType === 'win' ? 'Win' : analytics.currentStreakType === 'loss' ? 'Loss' : ''} Streak
+            <div className="mini-stat">
+              <span className="mini-label">Avg Loss</span>
+              <span className="mini-value loss">{formatPnL(-analytics.avgLoss)}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">Avg per Trade</span>
+              <span className={`mini-value ${analytics.expectancy > 0 ? 'profit' : analytics.expectancy < 0 ? 'loss' : ''}`}>
+                {formatPnL(analytics.expectancy)}
               </span>
             </div>
-            <div className="stat-badge">
-              <Trophy size={16} />
-              <span>Best win run: {analytics.bestWinStreak}</span>
+            <div className="mini-stat" title="Average result in units of the amount risked, for trades with a stop loss">
+              <span className="mini-label">Avg R</span>
+              <span className={`mini-value ${(analytics.avgR ?? 0) > 0 ? 'profit' : (analytics.avgR ?? 0) < 0 ? 'loss' : ''}`}>
+                {analytics.avgR === null ? '—' : formatR(analytics.avgR)}
+              </span>
+            </div>
+            <div className="mini-stat" title="Largest fall from a peak in your cumulative result">
+              <span className="mini-label">Max Drawdown</span>
+              <span className="mini-value">{formatUsd(analytics.maxDrawdown)}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">Avg Hold</span>
+              <span className="mini-value">{analytics.avgHoldMs === null ? '—' : formatDuration(analytics.avgHoldMs)}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">Open Trades</span>
+              <span className="mini-value">{analytics.openTrades}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">Closed Trades</span>
+              <span className="mini-value">{analytics.closedTrades}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">This Week</span>
+              <span className="mini-value">{analytics.tradesThisWeek}</span>
+            </div>
+            <div className="mini-stat">
+              <span className="mini-label">This Month</span>
+              <span className="mini-value">{analytics.tradesThisMonth}</span>
             </div>
           </div>
         </div>
 
-        {/* Secondary Stats */}
-        <div className="secondary-stats">
-          <div className="mini-stat">
-            <span className="mini-label">Avg Win</span>
-            <span className="mini-value profit">{formatPnL(analytics.avgWin)}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">Avg Loss</span>
-            <span className="mini-value loss">{formatPnL(-analytics.avgLoss)}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">Avg per Trade</span>
-            <span className={`mini-value ${analytics.expectancy > 0 ? 'profit' : analytics.expectancy < 0 ? 'loss' : ''}`}>
-              {formatPnL(analytics.expectancy)}
-            </span>
-          </div>
-          <div className="mini-stat" title="Average result in units of the amount risked, for trades with a stop loss">
-            <span className="mini-label">Avg R</span>
-            <span className={`mini-value ${(analytics.avgR ?? 0) > 0 ? 'profit' : (analytics.avgR ?? 0) < 0 ? 'loss' : ''}`}>
-              {analytics.avgR === null ? '—' : formatR(analytics.avgR)}
-            </span>
-          </div>
-          <div className="mini-stat" title="Largest fall from a peak in your cumulative result">
-            <span className="mini-label">Max Drawdown</span>
-            <span className="mini-value">{formatUsd(analytics.maxDrawdown)}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">Avg Hold</span>
-            <span className="mini-value">{analytics.avgHoldMs === null ? '—' : formatDuration(analytics.avgHoldMs)}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">Open Trades</span>
-            <span className="mini-value">{analytics.openTrades}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">Closed Trades</span>
-            <span className="mini-value">{analytics.closedTrades}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-label">This Month</span>
-            <span className="mini-value">{analytics.tradesThisMonth}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="ji-charts">
-        <EquityCurve trades={shownTrades} />
-        <PnLCalendar trades={shownTrades} />
-      </div>
-
-      <EdgeReport trades={shownTrades} />
-
-      <RulesCard userId={user.uid} rules={rules} trades={shownTrades} breaks={ruleBreaks} />
-
-      <WeeklyCoach userId={user.uid} trades={shownTrades} rules={rules} />
-
-      {/* Crypto Recommendations */}
-      <CryptoRecommendations />
-
-      {/* Recent Activity */}
-      <div className="activity-section">
-        <div className="section-header">
-          <div className="section-title">
-            <Zap size={24} className="section-icon" />
-            <h2>Recent Activity</h2>
-          </div>
+        <div className="ji-charts">
+          <EquityCurve trades={shownTrades} />
+          <PnLCalendar trades={shownTrades} />
         </div>
 
-        {recentActivity.length > 0 ? (
-          <div className="activity-timeline">
-            {recentActivity.map((item) => (
-              <div
-                key={`${item.type}-${item.id}`}
-                className={`activity-item ${item.type}`}
-                onClick={() => {
-                  if (item.type === 'trade') {
-                    setSelectedTrade(item.data as Trade)
-                  } else {
-                    setSelectedNote(item.data as JournalNote)
-                  }
-                }}
-              >
-                <div className="activity-icon">
-                  {item.type === 'trade' ? (
-                    item.isProfit ? <TrendingUp size={18} /> : <TrendingDown size={18} />
-                  ) : (
-                    <BookOpen size={18} />
-                  )}
-                </div>
-                <div className="activity-content">
-                  <span className="activity-title">{item.title}</span>
-                  <span className="activity-subtitle">{item.subtitle}</span>
-                </div>
-                <div className="activity-time">
-                  {item.date.toLocaleDateString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-activity">
-            <AlertCircle size={24} />
-            <p>No recent activity. Start tracking your trades!</p>
-          </div>
-        )}
-      </div>
-
-      <div className={`journal-content-grid ${tradesView === 'all' || notesView === 'all' ? 'expanded' : ''}`}>
-        {/* Trades Section */}
-        <div className="journal-section">
+        {/* Recent Activity */}
+        <div className="activity-section">
           <div className="section-header">
             <div className="section-title">
-              <TrendingUp size={24} className="section-icon" />
-              <h2>Trades</h2>
+              <Zap size={24} className="section-icon" />
+              <h2>Recent Activity</h2>
             </div>
+          </div>
+
+          {recentActivity.length > 0 ? (
+            <div className="activity-timeline">
+              {recentActivity.map((item) => (
+                <div
+                  key={`${item.type}-${item.id}`}
+                  className={`activity-item ${item.type}`}
+                  onClick={() => {
+                    if (item.type === 'trade') {
+                      setSelectedTrade(item.data as Trade)
+                    } else {
+                      setSelectedNote(item.data as JournalNote)
+                    }
+                  }}
+                >
+                  <div className="activity-icon">
+                    {item.type === 'trade' ? (
+                      item.isProfit ? <TrendingUp size={18} /> : <TrendingDown size={18} />
+                    ) : (
+                      <BookOpen size={18} />
+                    )}
+                  </div>
+                  <div className="activity-content">
+                    <span className="activity-title">{item.title}</span>
+                    <span className="activity-subtitle">{item.subtitle}</span>
+                  </div>
+                  <div className="activity-time">
+                    {item.date.toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-activity">
+              <AlertCircle size={24} />
+              <p>No recent activity. Start tracking your trades!</p>
+            </div>
+          )}
+        </div>
+      </Chapter>
+
+      <Chapter id="trades" n="02" title="Trades" text="Log, import and review every trade.">
+        <div className="journal-section">
+          <div className="section-header">
+            <span className="section-count">{shownTrades.length} {accountMode === 'all' ? 'trades' : `${accountMode} trades`}</span>
             <div className="section-actions">
               <button
                 className="add-item-btn"
@@ -520,7 +518,6 @@ const JournalHome = () => {
                   <List size={16} />
                 </button>
               </div>
-              <span className="section-count">{shownTrades.length} {accountMode === 'all' ? 'total' : accountMode}</span>
             </div>
           </div>
 
@@ -611,14 +608,18 @@ const JournalHome = () => {
             </div>
           )}
         </div>
+      </Chapter>
 
-        {/* Notes Section */}
+      <Chapter id="review" n="03" title="Review" text="What is working, what is costing you, and whether you kept your rules.">
+        <EdgeReport trades={shownTrades} />
+        <RulesCard userId={user.uid} rules={rules} trades={shownTrades} breaks={ruleBreaks} />
+        <WeeklyCoach userId={user.uid} trades={shownTrades} rules={rules} />
+      </Chapter>
+
+      <Chapter id="notes" n="04" title="Notes" text="Plans, ideas and lessons, linked to your trades.">
         <div className="journal-section">
           <div className="section-header">
-            <div className="section-title">
-              <BookOpen size={24} className="section-icon" />
-              <h2>Notes</h2>
-            </div>
+            <span className="section-count">{notes.length} {notes.length === 1 ? 'note' : 'notes'}</span>
             <div className="section-actions">
               <button
                 className="add-item-btn"
@@ -644,7 +645,6 @@ const JournalHome = () => {
                   <List size={16} />
                 </button>
               </div>
-              <span className="section-count">{notes.length} total</span>
             </div>
           </div>
 
@@ -719,7 +719,11 @@ const JournalHome = () => {
             </div>
           )}
         </div>
-      </div>
+      </Chapter>
+
+      <Chapter id="ideas" n="05" title="Market ideas" text="Pairs worth a look today. Analyse them before you trade.">
+        <CryptoRecommendations />
+      </Chapter>
 
       {/* Modals */}
       {showExportModal && (
