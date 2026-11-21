@@ -10,17 +10,19 @@
 }
 
 .nav-container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 70px;
-  gap: 20px;
+  gap: 12px;
 }
 
 .nav-logo {
+  /* The logo and the account controls keep their size; only the links' spacing gives way */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -58,18 +60,19 @@
 
 .nav-links {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   align-items: center;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
   justify-content: center;
-  max-width: 800px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 6px;
+  padding: 10px 12px;
+  white-space: nowrap;
   border-radius: 10px;
   text-decoration: none;
   color: var(--color-text-secondary);
@@ -96,6 +99,7 @@
 }
 
 .nav-auth {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -177,22 +181,8 @@
 }
 
 /* Responsive Design */
-/* Seven links plus the account controls: tighten up before the labels disappear at 1200px */
-@media (max-width: 1440px) {
-  .nav-container {
-    padding: 0 24px;
-    gap: 12px;
-  }
-
-  .nav-links {
-    gap: 2px;
-  }
-
-  .nav-link {
-    padding: 10px 12px;
-    gap: 6px;
-  }
-
+/* Seven links plus the account controls only fit with the name when the menu is at its widest */
+@media (max-width: 1599px) {
   /* Show just the avatar; the name stays in the tooltip and the image's alt text */
   .user-info {
     padding: 8px 10px;
@@ -208,7 +198,7 @@
   }
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1260px) {
   .nav-links {
     gap: 4px;
   }
